@@ -7,7 +7,7 @@
  * - Window minimize (cross-platform)
  */
 
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const { existsSync, readdirSync, statSync } = require('fs');
 const { join } = require('path');
 const { homedir, platform } = require('os');
@@ -127,7 +127,7 @@ public class Win32 {
 }, [IntPtr]::Zero) | Out-Null
 `;
       const encoded = Buffer.from(psScript, 'utf16le').toString('base64');
-      execSync(`powershell -NoProfile -EncodedCommand ${encoded}`, {
+      execFileSync('powershell.exe', ['-NoProfile', '-EncodedCommand', encoded], {
         windowsHide: true,
         encoding: 'utf8',
         timeout: 10000

@@ -7,15 +7,66 @@
  * - Session start/stop/list
  *
  * Compatible with playwright-cli 0.1.x (session API: list, close, open --persistent)
+ *
+ * All CLI calls use execFileSync(node, [cli.js, ...]) to avoid cmd.exe CMD window flash on Windows.
  */
 
-const { execSync, spawn } = require('child_process');
+const { execSync, execFileSync, spawn } = require('child_process');
+const { existsSync } = require('fs');
+const { join } = require('path');
 const { isWindows } = require('./platform');
 const { getBrowser } = require('./config');
 
 //region Constants
 
 const CLI_TIMEOUT = 8000;  // Default timeout for CLI commands
+
+//endregion
+
+//region CLI Path Resolution
+
+/**
+ * Resolve playwright-cli JS entry point path.
+ * Uses node + JS file directly to avoid cmd.exe (prevents CMD window flash on Windows).
+ * Cached after first resolution.
+ * @returns {string|null}
+ */
+let _cliJsPath;
+function getPlaywrightCliPath() {
+  if (_cliJsPath !== undefined) return _cliJsPath;
+  try {
+    const npmRoot = execSync('npm root -g', {
+      encoding: 'utf8', timeout: 5000, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe']
+    }).trim();
+    const jsPath = join(npmRoot, '@playwright', 'cli', 'playwright-cli.js');
+    _cliJsPath = existsSync(jsPath) ? jsPath : null;
+  } catch {
+    _cliJsPath = null;
+  }
+  return _cliJsPath;
+}
+
+/**
+ * Run a playwright-cli command via node (no cmd.exe).
+ * Falls back to execSync string command if JS path not resolved.
+ */
+function execCli(args, options = {}) {
+  const timeout = options.timeout ?? CLI_TIMEOUT;
+  const env = options.env ?? process.env;
+  const jsPath = getPlaywrightCliPath();
+
+  if (jsPath) {
+    return execFileSync(process.execPath, [jsPath, ...args], {
+      encoding: 'utf8', timeout, windowsHide: true,
+      stdio: ['pipe', 'pipe', 'pipe'], env
+    });
+  }
+  // Fallback: string command (may flash on Windows)
+  return execSync(`playwright-cli ${args.join(' ')}`, {
+    encoding: 'utf8', timeout, windowsHide: true,
+    stdio: ['pipe', 'pipe', 'pipe'], env
+  });
+}
 
 //endregion
 
@@ -27,12 +78,7 @@ const CLI_TIMEOUT = 8000;  // Default timeout for CLI commands
  */
 function checkPlaywrightCli() {
   try {
-    const result = execSync('playwright-cli --version', {
-      encoding: 'utf8',
-      timeout: 5000,
-      windowsHide: true,
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    const result = execCli(['--version'], { timeout: 5000 });
     return { installed: true, version: result.trim() };
   } catch {
     return { installed: false, version: null };
@@ -45,7 +91,7 @@ function checkPlaywrightCli() {
 
 /**
  * Run a playwright-cli command
- * @param {string} args - Command arguments
+ * @param {string} args - Command arguments (space-separated string)
  * @param {object} options - Options
  * @param {number} [options.timeout] - Timeout in ms
  * @returns {string} - Command output
@@ -53,13 +99,7 @@ function checkPlaywrightCli() {
 function runCli(args, options = {}) {
   const timeout = options.timeout || CLI_TIMEOUT;
   try {
-    const result = execSync(`playwright-cli ${args}`, {
-      encoding: 'utf8',
-      timeout,
-      windowsHide: true,
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-    return result;
+    return execCli(args.split(' '), { timeout });
   } catch (error) {
     if (error.killed) {
       throw new Error(`CLI command timed out after ${timeout}ms: playwright-cli ${args}`);
@@ -69,7 +109,7 @@ function runCli(args, options = {}) {
 }
 
 /**
- * Run code in a session (simple version - escapes quotes)
+ * Run code in a session
  * Uses PLAYWRIGHT_CLI_SESSION env var for session targeting
  * @param {number|string} sessionId - Session ID
  * @param {string} code - JavaScript code to run
@@ -78,17 +118,8 @@ function runCli(args, options = {}) {
  */
 function runCode(sessionId, code, timeout = CLI_TIMEOUT) {
   try {
-    const result = execSync(
-      `playwright-cli run-code "${code.replace(/"/g, '\\"')}"`,
-      {
-        encoding: 'utf8',
-        timeout,
-        windowsHide: true,
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, PLAYWRIGHT_CLI_SESSION: `perplexity-${sessionId}` }
-      }
-    );
-    return result;
+    const env = { ...process.env, PLAYWRIGHT_CLI_SESSION: `perplexity-${sessionId}` };
+    return execCli(['run-code', code], { timeout, env });
   } catch {
     return null;
   }
@@ -109,25 +140,19 @@ function startSession(sessionId, browser) {
   const sessionName = `perplexity-${sessionId}`;
   const sessionEnv = { ...process.env, PLAYWRIGHT_CLI_SESSION: sessionName };
 
-  // Windows: use COMSPEC (full path to cmd.exe) — 'cmd' alone fails with ENOENT in some shells
-  const cmd = isWindows() ? (process.env.COMSPEC || 'cmd.exe') : null;
-
-  // 0.1.x: 'open' works for both new and existing sessions
-  // --persistent saves profile to disk (required for session cloning)
-  // --headed required (Perplexity blocks headless via Cloudflare)
   const cliArgs = ['open', 'https://perplexity.ai',
     '--persistent', '--headed', '--browser', browserName];
 
+  const jsPath = getPlaywrightCliPath();
   let child;
-  if (cmd) {
-    child = spawn(cmd, ['/c', 'playwright-cli', ...cliArgs],
-      { detached: true, stdio: 'ignore', windowsHide: true, env: sessionEnv });
+  if (jsPath) {
+    child = spawn(process.execPath, [jsPath, ...cliArgs],
+      { stdio: 'ignore', windowsHide: true, env: sessionEnv });
   } else {
     child = spawn('playwright-cli', cliArgs,
-      { detached: true, stdio: 'ignore', env: sessionEnv });
+      { stdio: 'ignore', windowsHide: true, shell: true, env: sessionEnv });
   }
 
-  // Prevent unhandled error from crashing the process
   child.on('error', () => {});
   child.unref();
 }
@@ -138,13 +163,8 @@ function startSession(sessionId, browser) {
  */
 function stopSession(sessionId) {
   try {
-    execSync(`playwright-cli close`, {
-      encoding: 'utf8',
-      timeout: 5000,
-      windowsHide: true,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, PLAYWRIGHT_CLI_SESSION: `perplexity-${sessionId}` }
-    });
+    const env = { ...process.env, PLAYWRIGHT_CLI_SESSION: `perplexity-${sessionId}` };
+    execCli(['close'], { timeout: 5000, env });
   } catch {
     // Ignore - session may already be closed
   }
@@ -157,13 +177,7 @@ function stopSession(sessionId) {
  */
 function isSessionRunning(sessionId) {
   try {
-    const result = execSync('playwright-cli list', {
-      encoding: 'utf8',
-      timeout: 5000,
-      windowsHide: true,
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-    // 0.1.x format: "- perplexity-0:\n  - status: open"
+    const result = execCli(['list'], { timeout: 5000 });
     const sessionPattern = new RegExp(`- perplexity-${sessionId}:[\\s\\S]*?status:\\s*open`);
     return sessionPattern.test(result);
   } catch {
@@ -177,25 +191,19 @@ function isSessionRunning(sessionId) {
  */
 function verifySessionRunning(sessionId) {
   if (!isSessionRunning(sessionId)) {
-    throw new Error(`Session perplexity-${sessionId} is not running. Run 'ppx-research init-pool --count 1' first.`);
+    throw new Error(`Session perplexity-${sessionId} is not running.`);
   }
 }
 
 /**
  * Press a key in a session
- * Uses PLAYWRIGHT_CLI_SESSION env var for session targeting
  * @param {number|string} sessionId - Session ID
  * @param {string} key - Key to press
  */
 function pressKey(sessionId, key) {
   try {
-    execSync(`playwright-cli press ${key}`, {
-      encoding: 'utf8',
-      timeout: CLI_TIMEOUT,
-      windowsHide: true,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, PLAYWRIGHT_CLI_SESSION: `perplexity-${sessionId}` }
-    });
+    const env = { ...process.env, PLAYWRIGHT_CLI_SESSION: `perplexity-${sessionId}` };
+    execCli(['press', key], { timeout: CLI_TIMEOUT, env });
   } catch {
     // Ignore press errors
   }
