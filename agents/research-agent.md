@@ -17,15 +17,17 @@ CRITICAL: All Perplexity interaction happens through `ppx-research` commands usi
 
 ## CLI Command
 
-Use the `ppx-research` command (installed globally via npm link):
+The SubagentStart hook injects the scripts path. Use it for all commands:
 
 ```
-ppx-research <command> [options]
+node "{SCRIPTS_PATH}/perplexity-research.mjs" <command> [options]
 ```
+
+If `ppx-research` alias is available (registered via npm link), you can use that instead.
 
 ## Your Responsibilities
 
-1. Execute research via `ppx-research` commands (Bash)
+1. Execute research via script commands (Bash)
 2. Evaluate responses directly from command output (text returned to stdout)
 3. Follow-up as needed
 4. Download final output (once, as last step before close)

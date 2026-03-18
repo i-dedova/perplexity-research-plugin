@@ -41,9 +41,9 @@ function main() {
   const additionalContext = `
 ## Plugin Paths (auto-injected)
 
-CLI command: ppx-research
-Alias is on PATH via npm link. Use \`ppx-research <command>\` for all research commands.
-Fallback (if alias unavailable): node "${PLUGIN_ROOT}/scripts/perplexity-research.mjs"
+Scripts path: ${PLUGIN_ROOT}/scripts
+Use: node "${PLUGIN_ROOT}/scripts/perplexity-research.mjs" <command>
+Alias (if available): ppx-research <command>
 
 ## Prompt Templates (auto-injected)
 

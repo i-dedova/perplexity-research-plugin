@@ -261,7 +261,7 @@ function buildOutput({ issues, cliCheck, poolCheck, assignedSession, requestedSe
       statusMsg += ` [reassigned: ${requestedSession}→${assignedSession}]`;
     }
 
-    let sessionNotice = `Session perplexity-${assignedSession} is running.\nUse: ppx-research <command> --session ${assignedSession}`;
+    let sessionNotice = `Session perplexity-${assignedSession} is running.\nUse: node "${PLUGIN_ROOT}/scripts/perplexity-research.mjs" <command> --session ${assignedSession}`;
     if (wasReassigned) {
       sessionNotice = `IMPORTANT: Your assigned session is ${assignedSession} (requested ${requestedSession} was occupied). Use --session ${assignedSession} for ALL commands in this research session.\n\n${sessionNotice}`;
     }
@@ -331,7 +331,7 @@ Missing required fields: ${missingFields.join(', ')}
 Required prompt format (ALL fields mandatory):
 ${REQUIRED_FORMAT}
 
-CLI: ppx-research <command>
+CLI: node "${PLUGIN_ROOT}/scripts/perplexity-research.mjs" <command>
 
 Retry the Task call with ALL required fields. Do NOT omit any field.
 
