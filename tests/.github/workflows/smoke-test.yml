@@ -1,0 +1,145 @@
+name: Smoke Tests
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'scripts/**'
+      - 'hooks/**'
+      - '.claude-plugin/**'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'scripts/**'
+      - 'hooks/**'
+      - '.claude-plugin/**'
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [20, 22]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} / Node ${{ matrix.node-version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Create test directory structure
+        shell: bash
+        run: |
+          # Simulate plugin installation at ~/.claude/plugins/perplexity-research
+          mkdir -p ~/.claude/plugins/perplexity-research
+          cp -r scripts ~/.claude/plugins/perplexity-research/
+          cp -r hooks ~/.claude/plugins/perplexity-research/
+          cp -r .claude-plugin ~/.claude/plugins/perplexity-research/
+
+          # Create optional directories if they exist
+          [ -d agents ] && cp -r agents ~/.claude/plugins/perplexity-research/ || true
+          [ -d commands ] && cp -r commands ~/.claude/plugins/perplexity-research/ || true
+          [ -d skills ] && cp -r skills ~/.claude/plugins/perplexity-research/ || true
+          [ -d templates ] && cp -r templates ~/.claude/plugins/perplexity-research/ || true
+
+      - name: Copy smoke tests
+        shell: bash
+        run: |
+          mkdir -p ~/.claude/plugin-tests/perplexity-research
+          cp tests/smoke-test.js tests/test-utils.js tests/test-*.js \
+             ~/.claude/plugin-tests/perplexity-research/
+
+      - name: Run smoke tests
+        shell: bash
+        run: |
+          node ~/.claude/plugin-tests/perplexity-research/smoke-test.js --ci
+
+      - name: Test setup.js preflight
+        shell: bash
+        run: |
+          node ~/.claude/plugins/perplexity-research/scripts/setup.js preflight
+
+      - name: Test cleanup.js status
+        shell: bash
+        run: |
+          node ~/.claude/plugins/perplexity-research/scripts/cleanup.js --status
+
+  validate-structure:
+    runs-on: ubuntu-latest
+    name: Validate Plugin Structure
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required files
+        run: |
+          echo "Checking required files..."
+
+          # Required files
+          test -f .claude-plugin/plugin.json || (echo "Missing: .claude-plugin/plugin.json" && exit 1)
+          test -f scripts/setup.js || (echo "Missing: scripts/setup.js" && exit 1)
+          test -f scripts/perplexity-research.mjs || (echo "Missing: scripts/perplexity-research.mjs" && exit 1)
+          test -f scripts/cleanup.js || (echo "Missing: scripts/cleanup.js" && exit 1)
+          test -d scripts/lib || (echo "Missing: scripts/lib directory" && exit 1)
+
+          # Check lib modules
+          for mod in index.js config.js platform.js playwright.js session-status.js session-cookie.js session-state.js cli.js; do
+            test -f "scripts/lib/$mod" || (echo "Missing: scripts/lib/$mod" && exit 1)
+          done
+
+          # Check hooks
+          for hook in check-research-agent.js validate-research-session.js inject-templates.js extract-research-output.js; do
+            test -f "hooks/$hook" || (echo "Missing: hooks/$hook" && exit 1)
+          done
+
+          echo "✓ All required files present"
+
+      - name: Validate plugin.json
+        run: |
+          echo "Validating plugin.json..."
+
+          # Check it's valid JSON
+          cat .claude-plugin/plugin.json | python3 -m json.tool > /dev/null || (echo "Invalid JSON in plugin.json" && exit 1)
+
+          # Check required fields
+          python3 -c "
+          import json
+          with open('.claude-plugin/plugin.json') as f:
+              data = json.load(f)
+
+          required = ['name', 'version', 'description']
+          for field in required:
+              if field not in data:
+                  print(f'Missing required field: {field}')
+                  exit(1)
+
+          print('✓ plugin.json is valid')
+          "
+
+      - name: Check for syntax errors
+        run: |
+          echo "Checking JavaScript syntax..."
+
+          for file in scripts/*.js scripts/lib/*.js hooks/*.js; do
+            if [ -f "$file" ]; then
+              node --check "$file" || (echo "Syntax error in: $file" && exit 1)
+            fi
+          done
+
+          # Check .mjs files
+          for file in scripts/*.mjs; do
+            if [ -f "$file" ]; then
+              node --check "$file" || (echo "Syntax error in: $file" && exit 1)
+            fi
+          done
+
+          echo "✓ No syntax errors found"
