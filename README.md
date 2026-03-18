@@ -14,11 +14,13 @@ Automate deep research via Perplexity using Playwright CLI browser automation. T
 
 Clone the plugin into your Claude Code plugins directory:
 
-| Platform | Command |
-|----------|---------|
-| macOS / Linux | `git clone https://github.com/i-dedova/perplexity-research-plugin.git ~/.claude/plugins/perplexity-research` |
-| Windows (Git Bash) | Same as above — `~` works in Git Bash |
-| Windows (PowerShell) | `git clone https://github.com/i-dedova/perplexity-research-plugin.git $env:USERPROFILE\.claude\plugins\perplexity-research` |
+```bash
+# macOS / Linux / Windows (Git Bash)
+git clone https://github.com/i-dedova/perplexity-research-plugin.git ~/.claude/plugins/perplexity-research
+
+# Windows (PowerShell)
+git clone https://github.com/i-dedova/perplexity-research-plugin.git $env:USERPROFILE\.claude\plugins\perplexity-research
+```
 
 ### Option B: Via Marketplace
 
