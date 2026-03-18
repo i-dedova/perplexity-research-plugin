@@ -147,19 +147,21 @@ PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli close
 
 **Run if:** Step 7 was executed, OR `expired-pool` in missing array (pool expired but master valid)
 
+Before running the clone command, tell the user:
+
+"Now I'll clone your login to 10 browser sessions and validate each one. This persists your authenticated Perplexity session so future research runs instantly without re-login, and enables up to 10 parallel research agents. You'll see browser windows opening and closing — that's normal. Each session opens the browser, navigates to Perplexity, checks the login cookie, and closes. This takes 2-3 minutes. Don't interact with the browser windows while this is running."
+
 ```bash
 ppx-research setup clone-pool
 ```
 
-Validates master first, clones to 0-9, then validates each session individually (reads cookies, populates session-status.json).
+Validates master first, clones to 0-9, then validates each session individually.
 
 ---
 
 ## Step 9: CLAUDE.md Discoverability
 
-**Always run** (even on re-setup). Read `~/.claude/CLAUDE.md` first.
-
-Check if `perplexity-research` is already mentioned. If yes, skip this step.
+**Skip if:** `~/.claude/CLAUDE.md` does not exist, OR `perplexity-research` is already mentioned in it.
 
 If not mentioned, use AskUserQuestion:
 - **Question:** "Add Perplexity Research instructions to your CLAUDE.md? This helps Claude recognize more research opportunities and reach for the plugin more readily."

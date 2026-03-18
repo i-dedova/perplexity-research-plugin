@@ -10,26 +10,28 @@ Automate deep research via Perplexity using Playwright CLI browser automation. T
 - **Node.js** 18 or newer
 - **playwright-cli** >= 0.1.0 (`@playwright/cli` on npm)
 
-### Install
+### Step 1: Add the Marketplace
 
-In Claude Code, run:
+In Claude Code, add this repository as a plugin marketplace:
 
 ```
 /plugin marketplace add i-dedova/perplexity-research-plugin
-/plugin install perplexity-research
 ```
 
-Or clone manually:
+This registers the marketplace so Claude Code knows where to find the plugin.
 
+### Step 2: Install the Plugin
+
+```
+/plugin install perplexity-research@i-dedova-perplexity-research-plugin
+```
+
+Or from terminal:
 ```bash
-# macOS / Linux / Windows (Git Bash)
-git clone https://github.com/i-dedova/perplexity-research-plugin.git ~/.claude/plugins/perplexity-research
-
-# Windows (PowerShell)
-git clone https://github.com/i-dedova/perplexity-research-plugin.git $env:USERPROFILE\.claude\plugins\perplexity-research
+claude plugin install perplexity-research@i-dedova-perplexity-research-plugin
 ```
 
-### After Installing
+### Step 3: Run Setup
 
 Start a new Claude Code session and run:
 
@@ -44,6 +46,7 @@ The setup wizard walks you through everything:
 4. Clones your authenticated session across 10 browser pools
 
 First setup takes 3-5 minutes. After that, just use `/perplexity-research [topic]` to start researching.
+
 
 ## How It Works
 
@@ -92,8 +95,10 @@ The wizard is smart: it runs a preflight check, identifies what's broken or miss
 
 | Issue | Solution |
 |-------|----------|
+| Plugin not discoverable after install | Restart Claude Code (close all sessions first, then reopen) |
+| Plugin doesn't update | Update the marketplace first, then the plugin: `claude plugin marketplace update i-dedova-perplexity-research-plugin` then `claude plugin update perplexity-research@i-dedova-perplexity-research-plugin` |
 | playwright-cli not found | `npm install -g @playwright/cli@latest` |
-| Session not running | `ppx-research init-pool --count 1` |
+| Session not running | Run `/perplexity-setup` or `ppx-research init-pool --count 1` |
 | Not logged in / sessions expired | Run `/perplexity-setup` — it detects this and guides re-login |
 | Model not switching | Check your subscription tier in config — `claude-opus-4.6` requires Max |
 | Debugging issues | Check logs in `.claude/perplexity/logs/` |

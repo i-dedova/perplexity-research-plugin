@@ -225,6 +225,38 @@ function run() {
     assert('subscriptionTier' in cfg, 'Should have subscriptionTier');
   });
 
+  // === Fresh Install Preflight (no defaults leak) ===
+  log('\n=== Fresh Install Preflight ===');
+
+  test('preflight shows null for unconfigured values (not defaults)', () => {
+    // Simulate fresh install: temporarily rename config file
+    const { existsSync, renameSync } = require('fs');
+    const configFile = PATHS.configFile;
+    const backupFile = configFile + '.test-backup';
+    const hadConfig = existsSync(configFile);
+
+    if (hadConfig) {
+      renameSync(configFile, backupFile);
+    }
+
+    try {
+      const result = runScript('setup.js', 'preflight');
+      const json = JSON.parse(result.trim());
+
+      // All config values must be null on fresh install — NOT default values
+      assertEqual(json.config.browser, null, 'browser must be null on fresh install');
+      assertEqual(json.config.cleanupDays, null, 'cleanupDays must be null on fresh install');
+      assertEqual(json.config.defaultModel, null, 'defaultModel must be null (not "dynamic")');
+      assertEqual(json.config.defaultThinking, null, 'defaultThinking must be null (not "dynamic")');
+      assertEqual(json.config.subscriptionTier, null, 'subscriptionTier must be null (not "pro")');
+      assertEqual(json.config.exists, false, 'config.exists must be false');
+    } finally {
+      if (hadConfig) {
+        renameSync(backupFile, configFile);
+      }
+    }
+  });
+
   // === Model Selection ===
   log('\n=== Model Selection ===');
 

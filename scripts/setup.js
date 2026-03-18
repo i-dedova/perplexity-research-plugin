@@ -70,9 +70,9 @@ function getSetupStatus() {
       exists: cfg.exists,
       browser: cfg.browser,
       cleanupDays: cfg.cleanupDays,
-      defaultModel: cfg.defaultModel || DEFAULTS.defaultModel,
-      defaultThinking: cfg.defaultThinking || DEFAULTS.defaultThinking,
-      subscriptionTier: cfg.subscriptionTier || DEFAULTS.subscriptionTier,
+      defaultModel: cfg.defaultModel,
+      defaultThinking: cfg.defaultThinking,
+      subscriptionTier: cfg.subscriptionTier,
       file: PATHS.configFile
     },
     sessions: {
@@ -162,10 +162,10 @@ function cmdCheck() {
     console.log(`○ Cleanup interval: not set (default: ${DEFAULTS.cleanupDays} days)`);
   }
 
-  // Model settings (informational)
-  console.log(`○ Default model: ${status.config.defaultModel}`);
-  console.log(`○ Default thinking: ${status.config.defaultThinking}`);
-  console.log(`○ Subscription tier: ${status.config.subscriptionTier}`);
+  // Model settings
+  console.log(`○ Default model: ${status.config.defaultModel || `not set (default: ${DEFAULTS.defaultModel})`}`);
+  console.log(`○ Default thinking: ${status.config.defaultThinking || `not set (default: ${DEFAULTS.defaultThinking})`}`);
+  console.log(`○ Subscription tier: ${status.config.subscriptionTier || `not set (default: ${DEFAULTS.subscriptionTier})`}`);
 
   // Sessions
   const browser = status.config.browser || DEFAULTS.browser;
