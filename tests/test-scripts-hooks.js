@@ -19,30 +19,46 @@ function run() {
   // === CLI Alias ===
   log('\n=== CLI Alias ===');
 
+  test('install-alias.sh creates wrapper script', () => {
+    const { execSync } = require('child_process');
+    const { join } = require('path');
+    const installScript = join(PLUGIN_ROOT, 'scripts', 'install-alias.sh');
+    const result = execSync(`bash "${installScript}"`, { encoding: 'utf8', timeout: 10000, windowsHide: true });
+    assert(result.includes('ppx-research alias installed'), 'Should confirm installation');
+
+    const { existsSync } = require('fs');
+    const wrapperPath = join(require('os').homedir(), '.claude', 'bin', 'ppx-research');
+    assert(existsSync(wrapperPath), 'Wrapper script should exist at ~/.claude/bin/ppx-research');
+  });
+
+  // Ensure PATH includes ~/.claude/bin for alias tests
+  const aliasEnv = { ...process.env, PATH: `${require('os').homedir()}/.claude/bin:${process.env.PATH}` };
+  const aliasOpts = { encoding: 'utf8', timeout: 10000, windowsHide: true, shell: process.platform === 'win32' ? 'bash' : true, env: aliasEnv };
+
   test('ppx-research --help routes to research help', () => {
     const { execSync } = require('child_process');
-    const result = execSync('ppx-research --help', { encoding: 'utf8', timeout: 10000, windowsHide: true, shell: process.platform === 'win32' ? 'bash' : true });
+    const result = execSync('ppx-research --help', aliasOpts);
     assert(result.includes('ppx-research') || result.includes('Usage'),
            'Alias --help should show research usage');
   });
 
   test('ppx-research setup --help routes to setup help', () => {
     const { execSync } = require('child_process');
-    const result = execSync('ppx-research setup --help', { encoding: 'utf8', timeout: 10000, windowsHide: true, shell: process.platform === 'win32' ? 'bash' : true });
+    const result = execSync('ppx-research setup --help', aliasOpts);
     assert(result.includes('ppx-research setup'),
            'Alias setup --help should show setup usage');
   });
 
   test('ppx-research cleanup --help routes to cleanup help', () => {
     const { execSync } = require('child_process');
-    const result = execSync('ppx-research cleanup --help', { encoding: 'utf8', timeout: 10000, windowsHide: true, shell: process.platform === 'win32' ? 'bash' : true });
+    const result = execSync('ppx-research cleanup --help', aliasOpts);
     assert(result.includes('ppx-research cleanup'),
            'Alias cleanup --help should show cleanup usage');
   });
 
   test('ppx-research setup check works via alias', () => {
     const { execSync } = require('child_process');
-    const result = execSync('ppx-research setup check', { encoding: 'utf8', timeout: 10000, windowsHide: true, shell: process.platform === 'win32' ? 'bash' : true });
+    const result = execSync('ppx-research setup check', aliasOpts);
     assert(result.includes('playwright-cli'),
            'Alias setup check should output status');
   });

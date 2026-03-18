@@ -40,18 +40,13 @@ After install, verify with `playwright-cli --version`.
 
 **Always run** (even on re-setup — ensures alias exists after upgrades).
 
-Use `${CLAUDE_PLUGIN_ROOT}` to find the plugin regardless of install method:
-
 ```bash
-npm link --prefix "${CLAUDE_PLUGIN_ROOT}"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/install-alias.sh"
 ```
 
-If `CLAUDE_PLUGIN_ROOT` is not set (manual install), use the direct path:
-```bash
-npm link --prefix ~/.claude/plugins/perplexity-research
-```
+This creates a `ppx-research` wrapper at `~/.claude/bin/` and adds it to PATH. The wrapper finds the plugin dynamically, so it survives version updates.
 
-Verify with `ppx-research --help`.
+Verify with `ppx-research --help` (may need terminal restart for PATH change).
 
 ---
 
