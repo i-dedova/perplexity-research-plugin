@@ -40,6 +40,8 @@ After install, verify with `playwright-cli --version`.
 
 **Always run** (even on re-setup — ensures alias exists after upgrades).
 
+**IMPORTANT: Do NOT use `npm link`. Use the install-alias.sh script below — npm link breaks on marketplace installs.**
+
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/install-alias.sh"
 ```

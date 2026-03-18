@@ -1,6 +1,6 @@
 {
   "name": "perplexity-research",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Perplexity Research Plugin for Claude Code",
   "bin": {
     "ppx-research": "./bin/ppx-research.js"
