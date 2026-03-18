@@ -1,0 +1,8 @@
+{
+  "name": "perplexity-research",
+  "version": "0.1.0",
+  "description": "Perplexity research using web subscription via Playwright CLI automation",
+  "author": {
+    "name": "i-dedova"
+  }
+}

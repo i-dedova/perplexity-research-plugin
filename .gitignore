@@ -1,0 +1,12 @@
+# Temp files from research sessions
+.playwright-cli/
+
+# LLM logs (auto-generated, not plugin code)
+logs_llm/
+
+# Node modules (npm link creates these)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
