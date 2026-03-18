@@ -1,0 +1,13 @@
+{
+  "name": "perplexity-marketplace",
+  "description": "Plugins for Perplexity-powered research workflows",
+  "plugins": [
+    {
+      "name": "perplexity-research",
+      "description": "Perplexity research using web subscription via Playwright CLI automation",
+      "source": "github",
+      "repo": "i-dedova/perplexity-research-plugin",
+      "ref": "master"
+    }
+  ]
+}

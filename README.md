@@ -4,17 +4,48 @@ Automate deep research via Perplexity using Playwright CLI browser automation. T
 
 ## Installation
 
-| Platform | Plugin Directory |
-|----------|------------------|
-| Windows | `%USERPROFILE%\.claude\plugins\perplexity-research\` |
-| macOS/Linux | `~/.claude/plugins/perplexity-research/` |
-
-All paths below use `.claude/` relative to your home directory.
-
 ### Requirements
 
+- **Perplexity Pro or Max subscription** (free tier has limited access)
 - **Node.js** 18 or newer
-- **playwright-cli** >= 0.1.0 (`@playwright/cli` on npm). Versions below 0.1.0 are **not supported** — the session management API changed in 0.1.x.
+- **playwright-cli** >= 0.1.0 (`@playwright/cli` on npm)
+
+### Option A: Direct Install
+
+Clone the plugin into your Claude Code plugins directory:
+
+| Platform | Command |
+|----------|---------|
+| macOS / Linux | `git clone https://github.com/i-dedova/perplexity-research-plugin.git ~/.claude/plugins/perplexity-research` |
+| Windows (Git Bash) | Same as above — `~` works in Git Bash |
+| Windows (PowerShell) | `git clone https://github.com/i-dedova/perplexity-research-plugin.git $env:USERPROFILE\.claude\plugins\perplexity-research` |
+
+### Option B: Via Marketplace
+
+In Claude Code, add this repo as a plugin marketplace, then install:
+
+```
+/plugin marketplace add i-dedova/perplexity-research-plugin
+/plugin install perplexity-research
+```
+
+This reads the `marketplace.json` in the repo and installs the plugin automatically.
+
+### After Installing
+
+Start a new Claude Code session and run:
+
+```
+/perplexity-setup
+```
+
+The setup wizard walks you through everything:
+1. Installs `playwright-cli` (browser automation)
+2. Registers the `ppx-research` CLI alias
+3. Opens a browser for you to log into your Perplexity account
+4. Clones your authenticated session across 10 browser pools
+
+First setup takes 3-5 minutes. After that, just use `/perplexity-research [topic]` to start researching.
 
 ## How It Works
 
@@ -66,7 +97,10 @@ The wizard is smart: it runs a preflight check, identifies what's broken or miss
 | playwright-cli not found | `npm install -g @playwright/cli@latest` |
 | Session not running | `ppx-research init-pool --count 1` |
 | Not logged in / sessions expired | Run `/perplexity-setup` — it detects this and guides re-login |
+| Model not switching | Check your subscription tier in config — `claude-opus-4.6` requires Max |
 | Debugging issues | Check logs in `.claude/perplexity/logs/` |
+
+> **Max tier note:** Claude Opus 4.6 requires a Perplexity Max subscription. Set `subscription_tier: max` in your config to enable it. The model selector has been tested with Pro tier — Max users may encounter UI differences. Please [report issues](https://github.com/i-dedova/perplexity-research-plugin/issues).
 
 ## Usage
 
