@@ -44,11 +44,10 @@ After install, verify with `playwright-cli --version`.
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/install-alias.sh"
+export PATH="$HOME/.claude/bin:$PATH"
 ```
 
-This creates a `ppx-research` wrapper at `~/.claude/bin/` and adds it to PATH. The wrapper finds the plugin dynamically, so it survives version updates.
-
-Verify with `ppx-research --help` (may need terminal restart for PATH change).
+Run both commands — the first creates the wrapper, the second makes it available immediately. Verify with `ppx-research --help`.
 
 ---
 
@@ -119,8 +118,18 @@ ppx-research setup set-cleanup {days}
 
 ## Step 7: Create Master Session
 
-**Run if:** `master-session` in missing array OR user re-running setup
-**Skip if:** `expired-pool` in missing but NOT `master-session` — master is still valid, jump to Step 8
+**If `sessions.healthy` is true** (script-verified: master exists, cookies valid, pool complete):
+
+Use AskUserQuestion:
+- **Question:** "Your Perplexity sessions are already set up and authenticated. Do you want to re-login?"
+- **Options:** Keep existing sessions (skip to Step 9), Re-login (new account or refresh)
+
+**If "Keep":** Jump to Step 9.
+**If "Re-login":** Continue below.
+
+**If `sessions.healthy` is false:** Check `missing` array:
+- `master-session` in missing → Run this step (login required)
+- `expired-pool` in missing but NOT `master-session` → Master is valid, jump to Step 8
 
 1. Get browser from preflight (`config.browser`)
 
@@ -196,9 +205,9 @@ Edit that file to change browser, cleanup interval, or model settings.
 ## Re-running Setup
 
 When `isComplete: true` but user runs setup anyway:
-1. Ask if they want to refresh login (sessions expired)
-2. If yes → Run Steps 7-8 only
-3. If no → Show config file location
+1. Show config file location
+2. Only re-run Steps 7-8 if `master-session` or `expired-pool` is in missing array
+3. Do NOT force re-login if sessions are healthy — the preflight determines this
 
 When `expired-pool` in missing (pool sessions expired, master still valid):
 1. Skip Step 7 (no re-login needed)

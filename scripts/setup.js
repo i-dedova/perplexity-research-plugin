@@ -81,7 +81,8 @@ function getSetupStatus() {
       masterExpired,
       poolCount: poolCheck.poolCount,
       poolSessions: poolCheck.poolSessions,
-      expiredPoolCount
+      expiredPoolCount,
+      healthy: poolCheck.masterExists && !masterExpired && poolCheck.poolCount > 0 && expiredPoolCount === 0
     },
     missing: [],
     nextSteps: []
