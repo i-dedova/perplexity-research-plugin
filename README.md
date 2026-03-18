@@ -10,9 +10,16 @@ Automate deep research via Perplexity using Playwright CLI browser automation. T
 - **Node.js** 18 or newer
 - **playwright-cli** >= 0.1.0 (`@playwright/cli` on npm)
 
-### Option A: Direct Install
+### Install
 
-Clone the plugin into your Claude Code plugins directory:
+In Claude Code, run:
+
+```
+/plugin marketplace add i-dedova/perplexity-research-plugin
+/plugin install perplexity-research
+```
+
+Or clone manually:
 
 ```bash
 # macOS / Linux / Windows (Git Bash)
@@ -21,17 +28,6 @@ git clone https://github.com/i-dedova/perplexity-research-plugin.git ~/.claude/p
 # Windows (PowerShell)
 git clone https://github.com/i-dedova/perplexity-research-plugin.git $env:USERPROFILE\.claude\plugins\perplexity-research
 ```
-
-### Option B: Via Marketplace
-
-In Claude Code, add this repo as a plugin marketplace, then install:
-
-```
-/plugin marketplace add i-dedova/perplexity-research-plugin
-/plugin install perplexity-research
-```
-
-This reads the `marketplace.json` in the repo and installs the plugin automatically.
 
 ### After Installing
 
