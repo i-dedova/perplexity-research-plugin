@@ -1,5 +1,5 @@
 {
-  "name": "perplexity-research-plugin",
+  "name": "i-dedova-perplexity-research-plugin",
   "description": "Perplexity research using web subscription via Playwright CLI automation",
   "owner": {
     "name": "i-dedova"
