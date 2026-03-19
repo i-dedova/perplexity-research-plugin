@@ -6,7 +6,7 @@
  * Checks: playwright-cli, config, session pool, session validity, browser start + minimize
  */
 
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const { readFileSync } = require('fs');
 const { join } = require('path');
 
@@ -104,7 +104,7 @@ function ensureSessionValid(sessionId) {
   const setupScript = join(PLUGIN_ROOT, 'scripts', 'setup.js');
   log(`ensure-valid ${sessionId}: calling setup.js`);
   try {
-    const result = execSync(`node "${setupScript}" ensure-valid ${sessionId}`, {
+    const result = execFileSync(process.execPath, [setupScript, 'ensure-valid', String(sessionId)], {
       encoding: 'utf8',
       timeout: 60000,
       windowsHide: true,
@@ -222,7 +222,7 @@ function validateAndStartBrowser(assignedSession, cfg) {
 
   while (Date.now() - startTime < 10000) {
     try {
-      execSync('node -e "Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000)"', {
+      execFileSync(process.execPath, ['-e', 'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000)'], {
         timeout: 2000, windowsHide: true, stdio: 'ignore'
       });
     } catch {}

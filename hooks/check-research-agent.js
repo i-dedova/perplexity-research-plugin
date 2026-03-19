@@ -6,7 +6,7 @@
  * On match, delegates to validate-research-session.js for full validation.
  */
 
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const { readFileSync } = require('fs');
 const { join } = require('path');
 
@@ -37,7 +37,7 @@ function main() {
   const utilityScript = join(PLUGIN_ROOT, 'hooks', 'validate-research-session.js');
 
   try {
-    const result = execSync(`node "${utilityScript}"`, {
+    const result = execFileSync(process.execPath, [utilityScript], {
       input: raw,
       encoding: 'utf8',
       timeout: 70000,

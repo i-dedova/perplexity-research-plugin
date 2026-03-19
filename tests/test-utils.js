@@ -12,7 +12,7 @@ const { homedir, tmpdir } = require('os');
 
 //region Configuration
 
-const PLUGIN_ROOT = join(homedir(), '.claude', 'plugins', 'perplexity-research');
+const PLUGIN_ROOT = process.env.PERPLEXITY_PLUGIN_ROOT || join(homedir(), '.claude', 'plugins', 'perplexity-research');
 const LIB_PATH = join(PLUGIN_ROOT, 'scripts', 'lib');
 const TEMP_DIR = join(tmpdir(), 'perplexity-research-smoke-test');
 
@@ -220,8 +220,10 @@ function runHook(hookName, input, opts = {}) {
  * Script runner — eliminates repeated script exec blocks
  */
 function runScript(scriptName, args = '', opts = {}) {
+  const { execFileSync } = require('child_process');
   const scriptPath = join(PLUGIN_ROOT, 'scripts', scriptName);
-  return execSync(`node "${scriptPath}" ${args}`, {
+  const argsList = args ? args.split(' ') : [];
+  return execFileSync(process.execPath, [scriptPath, ...argsList], {
     encoding: 'utf8',
     timeout: opts.timeout || 10000,
     windowsHide: true,

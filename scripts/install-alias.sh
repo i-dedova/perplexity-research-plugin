@@ -1,6 +1,7 @@
 #!/bin/bash
 # Install ppx-research alias to ~/.claude/bin/
 # Works for both marketplace and direct installs.
+# Cross-platform: macOS (BSD), Linux (GNU), Windows (Git Bash)
 
 BIN_DIR="$HOME/.claude/bin"
 mkdir -p "$BIN_DIR"
@@ -8,12 +9,19 @@ mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/ppx-research" << 'WRAPPER'
 #!/bin/bash
 # ppx-research — find plugin dynamically, run it
-PLUGIN_JS=$(find "$HOME/.claude/plugins" -path "*/perplexity-research/*/bin/ppx-research.js" -newer "$HOME/.claude/plugins" 2>/dev/null | head -1)
-if [ -z "$PLUGIN_JS" ]; then
-  # Direct install fallback
-  PLUGIN_JS="$HOME/.claude/plugins/perplexity-research/bin/ppx-research.js"
-fi
-if [ ! -f "$PLUGIN_JS" ]; then
+# Checks cache (marketplace install) then direct install path
+
+# Find most recently modified ppx-research.js in plugin dirs
+PLUGIN_JS=""
+for dir in "$HOME/.claude/plugins/cache"/*/perplexity-research/*/bin \
+           "$HOME/.claude/plugins/perplexity-research/bin"; do
+  if [ -f "$dir/ppx-research.js" ]; then
+    PLUGIN_JS="$dir/ppx-research.js"
+    break
+  fi
+done
+
+if [ -z "$PLUGIN_JS" ] || [ ! -f "$PLUGIN_JS" ]; then
   echo "Error: perplexity-research plugin not found. Install with:"
   echo "  /plugin marketplace add i-dedova/perplexity-research-plugin"
   echo "  /plugin install perplexity-research@i-dedova-perplexity-research-plugin"

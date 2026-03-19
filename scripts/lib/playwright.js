@@ -8,13 +8,16 @@
  *
  * Compatible with playwright-cli 0.1.x (session API: list, close, open --persistent)
  *
- * All CLI calls use execFileSync(node, [cli.js, ...]) to avoid cmd.exe CMD window flash on Windows.
+ * Cross-platform: all CLI calls use execFileSync(node, [cli.js, ...]) to avoid
+ * cmd.exe CMD window flash on Windows. Path resolution probes common locations
+ * for nvm/Homebrew/fnm/volta compatibility on macOS/Linux.
  */
 
 const { execSync, execFileSync, spawn } = require('child_process');
 const { existsSync } = require('fs');
 const { join } = require('path');
-const { isWindows } = require('./platform');
+const { homedir } = require('os');
+const { isWindows, getPlatform } = require('./platform');
 const { getBrowser } = require('./config');
 
 //region Constants
@@ -28,27 +31,128 @@ const CLI_TIMEOUT = 8000;  // Default timeout for CLI commands
 /**
  * Resolve playwright-cli JS entry point path.
  * Uses node + JS file directly to avoid cmd.exe (prevents CMD window flash on Windows).
+ *
+ * Resolution order:
+ * 1. `npm root -g` (works for standard installs)
+ * 2. Platform-specific common paths (handles nvm, Homebrew, fnm, volta)
+ *
  * Cached after first resolution.
  * @returns {string|null}
  */
 let _cliJsPath;
 function getPlaywrightCliPath() {
   if (_cliJsPath !== undefined) return _cliJsPath;
+
+  const cliRelPath = join('@playwright', 'cli', 'playwright-cli.js');
+
+  // Strategy 1: npm root -g
   try {
     const npmRoot = execSync('npm root -g', {
       encoding: 'utf8', timeout: 5000, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe']
     }).trim();
-    const jsPath = join(npmRoot, '@playwright', 'cli', 'playwright-cli.js');
-    _cliJsPath = existsSync(jsPath) ? jsPath : null;
+    const jsPath = join(npmRoot, cliRelPath);
+    if (existsSync(jsPath)) {
+      _cliJsPath = jsPath;
+      return _cliJsPath;
+    }
   } catch {
-    _cliJsPath = null;
+    // npm not on PATH (common with nvm in non-interactive shells)
   }
+
+  // Strategy 2: probe common locations
+  const home = homedir();
+  const probePaths = [];
+
+  if (isWindows()) {
+    // Windows: npm global is in APPDATA
+    const appData = process.env.APPDATA || join(home, 'AppData', 'Roaming');
+    probePaths.push(join(appData, 'npm', 'node_modules'));
+  } else {
+    const platform = getPlatform();
+    // Shared Unix paths
+    probePaths.push(
+      '/usr/local/lib/node_modules',
+      '/usr/lib/node_modules'
+    );
+
+    if (platform === 'macos') {
+      // Homebrew ARM (Apple Silicon) and Intel
+      probePaths.push(
+        '/opt/homebrew/lib/node_modules',
+        '/usr/local/lib/node_modules'  // already added but harmless
+      );
+    }
+
+    // nvm — find active version's node_modules
+    const nvmDir = process.env.NVM_DIR || join(home, '.nvm');
+    try {
+      // Read .nvm/alias/default to find the default version
+      const defaultAlias = require('fs').readFileSync(
+        join(nvmDir, 'alias', 'default'), 'utf8'
+      ).trim();
+      // Could be a version like "22" or "lts/jod" — find matching dir
+      const versionsDir = join(nvmDir, 'versions', 'node');
+      if (existsSync(versionsDir)) {
+        const versions = require('fs').readdirSync(versionsDir)
+          .filter(v => v.startsWith('v'))
+          .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+        // Match alias: "22" matches "v22.x.x", "lts/jod" → just use latest
+        const match = versions.find(v => v.includes(defaultAlias)) || versions[0];
+        if (match) {
+          probePaths.push(join(versionsDir, match, 'lib', 'node_modules'));
+        }
+      }
+    } catch {
+      // No nvm or no default alias — try finding any nvm node version
+      const nvmVersionsDir = join(nvmDir, 'versions', 'node');
+      if (existsSync(nvmVersionsDir)) {
+        try {
+          const versions = require('fs').readdirSync(nvmVersionsDir)
+            .filter(v => v.startsWith('v'))
+            .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+          if (versions[0]) {
+            probePaths.push(join(nvmVersionsDir, versions[0], 'lib', 'node_modules'));
+          }
+        } catch {}
+      }
+    }
+
+    // fnm
+    const fnmDir = process.env.FNM_MULTISHELL_PATH;
+    if (fnmDir) {
+      probePaths.push(join(fnmDir, 'lib', 'node_modules'));
+    }
+
+    // volta
+    const voltaHome = process.env.VOLTA_HOME || join(home, '.volta');
+    if (existsSync(join(voltaHome, 'bin'))) {
+      probePaths.push(join(voltaHome, 'tools', 'image', 'node'));
+      // Volta shims — try to find the actual node_modules
+      try {
+        const nodeVersions = require('fs').readdirSync(join(voltaHome, 'tools', 'image', 'node'))
+          .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+        if (nodeVersions[0]) {
+          probePaths.push(join(voltaHome, 'tools', 'image', 'node', nodeVersions[0], 'lib', 'node_modules'));
+        }
+      } catch {}
+    }
+  }
+
+  for (const dir of probePaths) {
+    const jsPath = join(dir, cliRelPath);
+    if (existsSync(jsPath)) {
+      _cliJsPath = jsPath;
+      return _cliJsPath;
+    }
+  }
+
+  _cliJsPath = null;
   return _cliJsPath;
 }
 
 /**
  * Run a playwright-cli command via node (no cmd.exe).
- * Falls back to execSync string command if JS path not resolved.
+ * Falls back to execFileSync with 'playwright-cli' if JS path not resolved.
  */
 function execCli(args, options = {}) {
   const timeout = options.timeout ?? CLI_TIMEOUT;
@@ -61,8 +165,16 @@ function execCli(args, options = {}) {
       stdio: ['pipe', 'pipe', 'pipe'], env
     });
   }
-  // Fallback: string command (may flash on Windows)
-  return execSync(`playwright-cli ${args.join(' ')}`, {
+  // Fallback: try playwright-cli directly via execFileSync
+  // On Windows, .cmd files need shell — last resort
+  if (isWindows()) {
+    return execFileSync(process.env.COMSPEC || 'cmd.exe',
+      ['/c', 'playwright-cli', ...args], {
+        encoding: 'utf8', timeout, windowsHide: true,
+        stdio: ['pipe', 'pipe', 'pipe'], env
+      });
+  }
+  return execFileSync('playwright-cli', args, {
     encoding: 'utf8', timeout, windowsHide: true,
     stdio: ['pipe', 'pipe', 'pipe'], env
   });
@@ -132,6 +244,11 @@ function runCode(sessionId, code, timeout = CLI_TIMEOUT) {
 /**
  * Start a session in the background with persistent profile.
  * Always uses --persistent --headed (Perplexity blocks headless via Cloudflare).
+ *
+ * Platform-specific spawn behavior:
+ * - Windows: no detached (detached overrides windowsHide, causes CMD flash)
+ * - macOS/Linux: detached: true (prevents SIGHUP killing browser on parent exit)
+ *
  * @param {number|string} sessionId - Session ID (0-9)
  * @param {string} [browser] - Browser name (defaults to config)
  */
@@ -144,13 +261,24 @@ function startSession(sessionId, browser) {
     '--persistent', '--headed', '--browser', browserName];
 
   const jsPath = getPlaywrightCliPath();
+  const useDetached = !isWindows();
+
   let child;
   if (jsPath) {
-    child = spawn(process.execPath, [jsPath, ...cliArgs],
-      { stdio: 'ignore', windowsHide: true, env: sessionEnv });
+    child = spawn(process.execPath, [jsPath, ...cliArgs], {
+      stdio: 'ignore', windowsHide: true, detached: useDetached, env: sessionEnv
+    });
   } else {
-    child = spawn('playwright-cli', cliArgs,
-      { stdio: 'ignore', windowsHide: true, shell: true, env: sessionEnv });
+    if (isWindows()) {
+      child = spawn(process.env.COMSPEC || 'cmd.exe',
+        ['/c', 'playwright-cli', ...cliArgs], {
+          stdio: 'ignore', windowsHide: true, env: sessionEnv
+        });
+    } else {
+      child = spawn('playwright-cli', cliArgs, {
+        stdio: 'ignore', detached: true, env: sessionEnv
+      });
+    }
   }
 
   child.on('error', () => {});
@@ -213,6 +341,7 @@ function pressKey(sessionId, key) {
 
 module.exports = {
   CLI_TIMEOUT,
+  getPlaywrightCliPath,
   checkPlaywrightCli,
   runCli,
   runCode,

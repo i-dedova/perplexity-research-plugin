@@ -27,13 +27,12 @@ const { checkSessionCookie, refreshSession, ensureSessionValid, validateMasterSe
 
 function checkCliAlias() {
   try {
-    const { execSync } = require('child_process');
-    execSync('ppx-research --help', {
-      encoding: 'utf8', timeout: 5000, windowsHide: true,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      shell: platform.isWindows() ? 'bash' : true
-    });
-    return true;
+    const { existsSync } = require('fs');
+    const { join } = require('path');
+    const { homedir } = require('os');
+    // Check if wrapper script exists at ~/.claude/bin/ppx-research
+    const wrapperPath = join(homedir(), '.claude', 'bin', 'ppx-research');
+    return existsSync(wrapperPath);
   } catch {
     return false;
   }

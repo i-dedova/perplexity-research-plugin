@@ -134,7 +134,7 @@ public class Win32 {
       });
 
     } else if (currentPlatform === 'macos') {
-      // macOS: Use AppleScript
+      // macOS: Use AppleScript via execFileSync (no shell escaping issues)
       const script = `
         tell application "System Events"
           repeat with proc in every process whose visible is true
@@ -148,18 +148,19 @@ public class Win32 {
           end repeat
         end tell
       `;
-      execSync(`osascript -e '${script.replace(/'/g, "'\\''")}'`, {
+      execFileSync('osascript', ['-e', script], {
         encoding: 'utf8',
         timeout: 10000
       });
 
     } else {
-      // Linux: Try xdotool
+      // Linux: Try xdotool via execFileSync (no shell injection)
       try {
-        const windowIds = execSync(`xdotool search --name "${titlePattern}"`, { encoding: 'utf8' })
-          .trim().split('\n').filter(Boolean);
+        const windowIds = execFileSync('xdotool', ['search', '--name', titlePattern], {
+          encoding: 'utf8'
+        }).trim().split('\n').filter(Boolean);
         for (const id of windowIds) {
-          execSync(`xdotool windowminimize ${id}`, { encoding: 'utf8' });
+          execFileSync('xdotool', ['windowminimize', id], { encoding: 'utf8' });
         }
       } catch {
         // xdotool not available - silently continue
