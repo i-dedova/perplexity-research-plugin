@@ -7,7 +7,7 @@
 const { existsSync, mkdirSync, rmSync } = require('fs');
 const {
   PLUGIN_ROOT,
-  log, test,
+  log, test, skip,
   assert, assertEqual, assertType,
   lib, withSessionState, runHook, runScript
 } = require('./test-utils');
