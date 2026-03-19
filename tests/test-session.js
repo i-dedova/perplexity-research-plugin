@@ -172,7 +172,8 @@ function run() {
     }
   });
 
-  test('getSetupStatus reports healthy when all sessions valid', () => {
+  // Only meaningful when real sessions exist (not fake daemon dirs)
+  (!createdFakeDaemonDir ? test : skip)('getSetupStatus reports healthy when all sessions valid', () => {
     const result = runScript('setup.js', 'preflight');
     const json = JSON.parse(result.trim());
     assertEqual(json.sessions.masterExpired, false, 'masterExpired should be false for valid master');

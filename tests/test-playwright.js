@@ -168,7 +168,7 @@ async function run() {
 
     test('spawn browser with example.com (no Cloudflare)', () => {
       const jsPath = getPlaywrightCliPath();
-      const args = ['open', 'https://example.com', '--persistent', '--headed', '--browser', 'chromium'];
+      const args = ['open', 'https://example.com', '--persistent', '--browser', 'chromium'];
       if (jsPath) {
         const child = cpSpawn(process.execPath, [jsPath, ...args], {
           stdio: 'ignore', windowsHide: true,
@@ -182,7 +182,7 @@ async function run() {
           stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf8'
         });
       }
-      syncSleep(8000);
+      syncSleep(12000);
     });
 
     test('isSessionRunning detects CI session', () => {

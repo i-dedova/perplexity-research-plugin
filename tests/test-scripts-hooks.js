@@ -38,7 +38,9 @@ function run() {
     PATH: `${require('os').homedir()}/.claude/bin${pathSep}${process.env.PATH}`,
     PERPLEXITY_PLUGIN_ROOT: PLUGIN_ROOT
   };
-  const aliasOpts = { encoding: 'utf8', timeout: 10000, windowsHide: true, shell: true, env: aliasEnv };
+  // On Windows, shell:true uses cmd.exe which can't run bash scripts — use bash explicitly
+  const aliasShell = process.platform === 'win32' ? 'bash' : true;
+  const aliasOpts = { encoding: 'utf8', timeout: 10000, windowsHide: true, shell: aliasShell, env: aliasEnv };
 
   test('ppx-research --help routes to research help', () => {
     const { execSync } = require('child_process');
