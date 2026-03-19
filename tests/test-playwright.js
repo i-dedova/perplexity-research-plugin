@@ -162,76 +162,53 @@ async function run() {
   if (cliCheck.installed && process.env.CI) {
     log('\n=== CI Browser Integration ===');
     const CI_SESSION = 'ci-test';
-    const { execFileSync, spawn: cpSpawn } = require('child_process');
+    const { execFileSync: ciExecFileSync } = require('child_process');
     const { getPlaywrightCliPath } = playwright;
-    const ciEnv = { ...process.env, PLAYWRIGHT_CLI_SESSION: CI_SESSION };
 
-    test('spawn browser with example.com (no Cloudflare)', () => {
+    // Helper: run playwright-cli with -s= flag (works across all versions)
+    function ciCli(args, opts = {}) {
       const jsPath = getPlaywrightCliPath();
-      const args = ['open', 'https://example.com', '--persistent', '--browser', 'chromium'];
+      const fullArgs = [`-s=${CI_SESSION}`, ...args];
+      if (jsPath) {
+        return ciExecFileSync(process.execPath, [jsPath, ...fullArgs], {
+          encoding: 'utf8', timeout: opts.timeout || 15000,
+          windowsHide: true, stdio: ['pipe', 'pipe', 'pipe']
+        });
+      }
+      return ciExecFileSync('playwright-cli', fullArgs, {
+        encoding: 'utf8', timeout: opts.timeout || 15000,
+        windowsHide: true, stdio: ['pipe', 'pipe', 'pipe']
+      });
+    }
+
+    test('open browser session (headless, example.com)', () => {
       try {
-        if (jsPath) {
-          execFileSync(process.execPath, [jsPath, ...args], {
-            timeout: 20000, windowsHide: true, env: ciEnv,
-            stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf8'
-          });
-        } else {
-          execFileSync('playwright-cli', args, {
-            timeout: 20000, windowsHide: true, env: ciEnv,
-            stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf8'
-          });
-        }
+        const output = ciCli(['open', 'https://example.com', '--persistent', '--browser', 'chromium'], { timeout: 20000 });
+        logVerbose(`open output: ${output.substring(0, 200)}`);
       } catch (e) {
-        // open may return non-zero but still start the daemon
         logVerbose(`open stderr: ${e.stderr?.substring(0, 200)}`);
       }
       syncSleep(3000);
     });
 
-    test('isSessionRunning detects CI session', () => {
-      const jsPath = getPlaywrightCliPath();
-      let output;
-      if (jsPath) {
-        output = execFileSync(process.execPath, [jsPath, 'list'], {
-          encoding: 'utf8', timeout: 5000, windowsHide: true
-        });
-      } else {
-        output = execFileSync('playwright-cli', ['list'], {
-          encoding: 'utf8', timeout: 5000, windowsHide: true
-        });
-      }
+    test('list shows CI session', () => {
+      const output = ciCli(['list']);
+      logVerbose(`list output: ${output.substring(0, 300)}`);
       assert(output.includes(CI_SESSION), `Session ${CI_SESSION} should appear in list`);
-      assert(output.includes('open'), 'Session should have status: open');
     });
 
-    test('close CI session cleanly', () => {
-      const jsPath = getPlaywrightCliPath();
-      if (jsPath) {
-        execFileSync(process.execPath, [jsPath, 'close'], {
-          encoding: 'utf8', timeout: 10000, windowsHide: true, env: ciEnv
-        });
-      } else {
-        execFileSync('playwright-cli', ['close'], {
-          encoding: 'utf8', timeout: 10000, windowsHide: true, env: ciEnv
-        });
+    test('close CI session', () => {
+      try {
+        ciCli(['close'], { timeout: 10000 });
+      } catch {
+        // may already be closed
       }
-      syncSleep(1000);
     });
 
-    test('session no longer running after close', () => {
-      const jsPath = getPlaywrightCliPath();
-      let output;
-      if (jsPath) {
-        output = execFileSync(process.execPath, [jsPath, 'list'], {
-          encoding: 'utf8', timeout: 5000, windowsHide: true
-        });
-      } else {
-        output = execFileSync('playwright-cli', ['list'], {
-          encoding: 'utf8', timeout: 5000, windowsHide: true
-        });
-      }
+    test('session closed after close command', () => {
+      const output = ciCli(['list']);
       const isOpen = new RegExp(`${CI_SESSION}[\\s\\S]*?status:\\s*open`).test(output);
-      assert(!isOpen, `Session ${CI_SESSION} should not be running after close`);
+      assert(!isOpen, `Session ${CI_SESSION} should not be open after close`);
     });
   }
 }

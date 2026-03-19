@@ -27,8 +27,8 @@ jobs:
       - name: Install playwright-cli
         run: npm install -g @playwright/cli@latest
 
-      - name: Install Chromium browser
-        run: npx playwright install chromium
+      - name: Install Chromium browser with OS dependencies
+        run: npx playwright install --with-deps chromium
 
       - name: Install alias
         shell: bash
