@@ -28,7 +28,8 @@ function extractFilesFromTranscript(transcriptContent) {
   const sessionIdMatch = transcriptContent.match(/--session\s+(\d+)/);
   const sessionId = sessionIdMatch ? sessionIdMatch[1] : null;
 
-  const filePattern = /[A-Za-z]:[^\s"'`*]*[\\\/]\.playwright-cli[\\\/][^\s"'`*]+\.md/gi;
+  // Match paths on Windows (C:\...) and Unix (/home/...) containing .playwright-cli
+  const filePattern = /(?:[A-Za-z]:|\/)[^\s"'`*]*[\\\/]\.playwright-cli[\\\/][^\s"'`*]+\.md/gi;
   let responseFile = null;
   let synthesisFile = null;
 

@@ -9,17 +9,25 @@ mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/ppx-research" << 'WRAPPER'
 #!/bin/bash
 # ppx-research — find plugin dynamically, run it
-# Checks cache (marketplace install) then direct install path
+# Priority: PERPLEXITY_PLUGIN_ROOT env > cache > direct install
 
-# Find most recently modified ppx-research.js in plugin dirs
 PLUGIN_JS=""
-for dir in "$HOME/.claude/plugins/cache"/*/perplexity-research/*/bin \
-           "$HOME/.claude/plugins/perplexity-research/bin"; do
-  if [ -f "$dir/ppx-research.js" ]; then
-    PLUGIN_JS="$dir/ppx-research.js"
-    break
-  fi
-done
+
+# Check env var first (CI, custom installs)
+if [ -n "$PERPLEXITY_PLUGIN_ROOT" ] && [ -f "$PERPLEXITY_PLUGIN_ROOT/bin/ppx-research.js" ]; then
+  PLUGIN_JS="$PERPLEXITY_PLUGIN_ROOT/bin/ppx-research.js"
+fi
+
+# Check cache (marketplace install) then direct install
+if [ -z "$PLUGIN_JS" ]; then
+  for dir in "$HOME/.claude/plugins/cache"/*/perplexity-research/*/bin \
+             "$HOME/.claude/plugins/perplexity-research/bin"; do
+    if [ -f "$dir/ppx-research.js" ]; then
+      PLUGIN_JS="$dir/ppx-research.js"
+      break
+    fi
+  done
+fi
 
 if [ -z "$PLUGIN_JS" ] || [ ! -f "$PLUGIN_JS" ]; then
   echo "Error: perplexity-research plugin not found. Install with:"

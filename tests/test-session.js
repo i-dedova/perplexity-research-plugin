@@ -4,7 +4,7 @@
  * Tests: sessionStatus + sessionState + deepModeGuards
  */
 
-const { existsSync, mkdirSync } = require('fs');
+const { existsSync, mkdirSync, rmSync } = require('fs');
 const {
   PLUGIN_ROOT,
   log, test,
@@ -85,6 +85,32 @@ function run() {
 
   // === Preflight Session Health ===
   log('\n=== Preflight Session Health ===');
+
+  // Create fake daemon dir structure if it doesn't exist (needed for CI)
+  const { platform: platformMod } = lib();
+  const sessionDir = platformMod.getPlaywrightSessionDir();
+  let createdFakeDaemonDir = null;
+  if (!sessionDir) {
+    const { homedir: getHome } = require('os');
+    const { join: pathJoin } = require('path');
+    const home = getHome();
+    const p = process.platform;
+    let baseDir;
+    if (p === 'win32') {
+      baseDir = pathJoin(process.env.LOCALAPPDATA || pathJoin(home, 'AppData', 'Local'), 'ms-playwright', 'daemon');
+    } else if (p === 'darwin') {
+      baseDir = pathJoin(home, 'Library', 'Application Support', 'ms-playwright', 'daemon');
+    } else {
+      baseDir = pathJoin(home, '.local', 'share', 'ms-playwright', 'daemon');
+    }
+    // Create: daemon/fakehash/ud-perplexity-pro-msedge/
+    const fakeHashDir = pathJoin(baseDir, 'ci-test-hash');
+    const fakeMasterDir = pathJoin(fakeHashDir, 'ud-perplexity-pro-msedge');
+    mkdirSync(fakeMasterDir, { recursive: true });
+    // Also create pool session 0
+    mkdirSync(pathJoin(fakeHashDir, 'ud-perplexity-0-msedge'), { recursive: true });
+    createdFakeDaemonDir = baseDir;
+  }
 
   test('getSetupStatus detects expired master session', () => {
     const { fileLock, PATHS } = lib();
@@ -180,6 +206,11 @@ function run() {
     const donor = sessionStatus.findValidDonorSession(mockStatus, 'pro');
     assertEqual(donor, null, 'Should return null when no valid donors');
   });
+
+  // Cleanup fake daemon dir if we created one
+  if (createdFakeDaemonDir) {
+    try { rmSync(createdFakeDaemonDir, { recursive: true, force: true }); } catch {}
+  }
 
   // === session-state.js Module ===
   log('\n=== session-state.js Module ===');

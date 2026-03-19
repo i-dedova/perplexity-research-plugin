@@ -205,8 +205,9 @@ function withSessionState(testId, saveArgs, fn) {
  * Hook runner — eliminates repeated execSync blocks for hook scripts
  */
 function runHook(hookName, input, opts = {}) {
+  const { execFileSync } = require('child_process');
   const hookPath = join(PLUGIN_ROOT, 'hooks', hookName);
-  return execSync(`node "${hookPath}"`, {
+  return execFileSync(process.execPath, [hookPath], {
     input: JSON.stringify(input),
     encoding: 'utf8',
     timeout: opts.timeout || 5000,

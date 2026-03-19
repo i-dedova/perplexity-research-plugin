@@ -31,9 +31,14 @@ function run() {
     assert(existsSync(wrapperPath), 'Wrapper script should exist at ~/.claude/bin/ppx-research');
   });
 
-  // Ensure PATH includes ~/.claude/bin for alias tests
-  const aliasEnv = { ...process.env, PATH: `${require('os').homedir()}/.claude/bin:${process.env.PATH}` };
-  const aliasOpts = { encoding: 'utf8', timeout: 10000, windowsHide: true, shell: process.platform === 'win32' ? 'bash' : true, env: aliasEnv };
+  // Ensure PATH includes ~/.claude/bin and PERPLEXITY_PLUGIN_ROOT is set for alias tests
+  const pathSep = process.platform === 'win32' ? ';' : ':';
+  const aliasEnv = {
+    ...process.env,
+    PATH: `${require('os').homedir()}/.claude/bin${pathSep}${process.env.PATH}`,
+    PERPLEXITY_PLUGIN_ROOT: PLUGIN_ROOT
+  };
+  const aliasOpts = { encoding: 'utf8', timeout: 10000, windowsHide: true, shell: true, env: aliasEnv };
 
   test('ppx-research --help routes to research help', () => {
     const { execSync } = require('child_process');

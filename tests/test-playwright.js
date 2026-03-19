@@ -156,6 +156,81 @@ async function run() {
     }
     assert(threw, 'Should throw for non-running session');
   });
+
+  // === CI Browser Integration (no auth needed) ===
+  // Tests cross-platform browser spawn/close lifecycle using example.com
+  if (cliCheck.installed && process.env.CI) {
+    log('\n=== CI Browser Integration ===');
+    const CI_SESSION = 'ci-test';
+    const { execFileSync, spawn: cpSpawn } = require('child_process');
+    const { getPlaywrightCliPath } = playwright;
+    const ciEnv = { ...process.env, PLAYWRIGHT_CLI_SESSION: CI_SESSION };
+
+    test('spawn browser with example.com (no Cloudflare)', () => {
+      const jsPath = getPlaywrightCliPath();
+      const args = ['open', 'https://example.com', '--persistent', '--headed', '--browser', 'chromium'];
+      if (jsPath) {
+        const child = cpSpawn(process.execPath, [jsPath, ...args], {
+          stdio: 'ignore', windowsHide: true,
+          detached: process.platform !== 'win32', env: ciEnv
+        });
+        child.on('error', () => {});
+        child.unref();
+      } else {
+        execFileSync('playwright-cli', args, {
+          timeout: 15000, windowsHide: true, env: ciEnv,
+          stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf8'
+        });
+      }
+      syncSleep(8000);
+    });
+
+    test('isSessionRunning detects CI session', () => {
+      const jsPath = getPlaywrightCliPath();
+      let output;
+      if (jsPath) {
+        output = execFileSync(process.execPath, [jsPath, 'list'], {
+          encoding: 'utf8', timeout: 5000, windowsHide: true
+        });
+      } else {
+        output = execFileSync('playwright-cli', ['list'], {
+          encoding: 'utf8', timeout: 5000, windowsHide: true
+        });
+      }
+      assert(output.includes(CI_SESSION), `Session ${CI_SESSION} should appear in list`);
+      assert(output.includes('open'), 'Session should have status: open');
+    });
+
+    test('close CI session cleanly', () => {
+      const jsPath = getPlaywrightCliPath();
+      if (jsPath) {
+        execFileSync(process.execPath, [jsPath, 'close'], {
+          encoding: 'utf8', timeout: 10000, windowsHide: true, env: ciEnv
+        });
+      } else {
+        execFileSync('playwright-cli', ['close'], {
+          encoding: 'utf8', timeout: 10000, windowsHide: true, env: ciEnv
+        });
+      }
+      syncSleep(1000);
+    });
+
+    test('session no longer running after close', () => {
+      const jsPath = getPlaywrightCliPath();
+      let output;
+      if (jsPath) {
+        output = execFileSync(process.execPath, [jsPath, 'list'], {
+          encoding: 'utf8', timeout: 5000, windowsHide: true
+        });
+      } else {
+        output = execFileSync('playwright-cli', ['list'], {
+          encoding: 'utf8', timeout: 5000, windowsHide: true
+        });
+      }
+      const isOpen = new RegExp(`${CI_SESSION}[\\s\\S]*?status:\\s*open`).test(output);
+      assert(!isOpen, `Session ${CI_SESSION} should not be running after close`);
+    });
+  }
 }
 
 module.exports = { run };

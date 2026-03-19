@@ -27,16 +27,30 @@ jobs:
       - name: Install playwright-cli
         run: npm install -g @playwright/cli@latest
 
+      - name: Install Chromium browser
+        run: npx playwright install chromium
+
       - name: Install alias
         shell: bash
         run: bash scripts/install-alias.sh
 
-      - name: Run smoke tests
+      - name: Run smoke tests (Linux)
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           export PATH="$HOME/.claude/bin:$PATH"
-          # Set PLUGIN_ROOT for tests to find the plugin
           export PERPLEXITY_PLUGIN_ROOT="$GITHUB_WORKSPACE"
+          export CI=true
+          cd tests
+          xvfb-run --auto-servernum node smoke-test.js --ci
+
+      - name: Run smoke tests (macOS/Windows)
+        if: runner.os != 'Linux'
+        shell: bash
+        run: |
+          export PATH="$HOME/.claude/bin:$PATH"
+          export PERPLEXITY_PLUGIN_ROOT="$GITHUB_WORKSPACE"
+          export CI=true
           cd tests
           node smoke-test.js --ci
 
@@ -44,4 +58,5 @@ jobs:
         shell: bash
         run: |
           export PATH="$HOME/.claude/bin:$PATH"
+          export PERPLEXITY_PLUGIN_ROOT="$GITHUB_WORKSPACE"
           ppx-research --help
