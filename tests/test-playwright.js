@@ -169,20 +169,23 @@ async function run() {
     test('spawn browser with example.com (no Cloudflare)', () => {
       const jsPath = getPlaywrightCliPath();
       const args = ['open', 'https://example.com', '--persistent', '--browser', 'chromium'];
-      if (jsPath) {
-        const child = cpSpawn(process.execPath, [jsPath, ...args], {
-          stdio: 'ignore', windowsHide: true,
-          detached: process.platform !== 'win32', env: ciEnv
-        });
-        child.on('error', () => {});
-        child.unref();
-      } else {
-        execFileSync('playwright-cli', args, {
-          timeout: 15000, windowsHide: true, env: ciEnv,
-          stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf8'
-        });
+      try {
+        if (jsPath) {
+          execFileSync(process.execPath, [jsPath, ...args], {
+            timeout: 20000, windowsHide: true, env: ciEnv,
+            stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf8'
+          });
+        } else {
+          execFileSync('playwright-cli', args, {
+            timeout: 20000, windowsHide: true, env: ciEnv,
+            stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf8'
+          });
+        }
+      } catch (e) {
+        // open may return non-zero but still start the daemon
+        logVerbose(`open stderr: ${e.stderr?.substring(0, 200)}`);
       }
-      syncSleep(12000);
+      syncSleep(3000);
     });
 
     test('isSessionRunning detects CI session', () => {
