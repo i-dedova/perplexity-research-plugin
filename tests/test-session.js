@@ -103,12 +103,14 @@ function run() {
     } else {
       baseDir = pathJoin(home, '.local', 'share', 'ms-playwright', 'daemon');
     }
-    // Create: daemon/fakehash/ud-perplexity-pro-msedge/
+    // Create fake dirs matching the platform's default browser
+    const { DEFAULTS } = lib();
+    const fakeBrowser = DEFAULTS.browser;
     const fakeHashDir = pathJoin(baseDir, 'ci-test-hash');
-    const fakeMasterDir = pathJoin(fakeHashDir, 'ud-perplexity-pro-msedge');
+    const fakeMasterDir = pathJoin(fakeHashDir, `ud-perplexity-pro-${fakeBrowser}`);
     mkdirSync(fakeMasterDir, { recursive: true });
     // Also create pool session 0
-    mkdirSync(pathJoin(fakeHashDir, 'ud-perplexity-0-msedge'), { recursive: true });
+    mkdirSync(pathJoin(fakeHashDir, `ud-perplexity-0-${fakeBrowser}`), { recursive: true });
     createdFakeDaemonDir = baseDir;
   }
 
