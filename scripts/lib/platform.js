@@ -135,12 +135,13 @@ public class Win32 {
 
     } else if (currentPlatform === 'macos') {
       // macOS: Use AppleScript via execFileSync (no shell escaping issues)
+      const escaped = titlePattern.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
       const script = `
         tell application "System Events"
           repeat with proc in every process whose visible is true
             repeat with win in every window of proc
               try
-                if name of win contains "${titlePattern}" then
+                if name of win contains "${escaped}" then
                   set miniaturized of win to true
                 end if
               end try

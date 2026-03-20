@@ -95,7 +95,11 @@ function getPlaywrightCliPath() {
       if (existsSync(versionsDir)) {
         const versions = require('fs').readdirSync(versionsDir)
           .filter(v => v.startsWith('v'))
-          .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+          .sort((a, b) => {
+            // Strip 'v' prefix for consistent numeric comparison (v22.1.0 vs v20.10.0)
+            const av = a.replace(/^v/, ''), bv = b.replace(/^v/, '');
+            return bv.localeCompare(av, undefined, { numeric: true });
+          });
         // Match alias: "22" matches "v22.x.x", "lts/jod" → just use latest
         const match = versions.find(v => v.includes(defaultAlias)) || versions[0];
         if (match) {
@@ -109,7 +113,11 @@ function getPlaywrightCliPath() {
         try {
           const versions = require('fs').readdirSync(nvmVersionsDir)
             .filter(v => v.startsWith('v'))
-            .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+            .sort((a, b) => {
+            // Strip 'v' prefix for consistent numeric comparison (v22.1.0 vs v20.10.0)
+            const av = a.replace(/^v/, ''), bv = b.replace(/^v/, '');
+            return bv.localeCompare(av, undefined, { numeric: true });
+          });
           if (versions[0]) {
             probePaths.push(join(nvmVersionsDir, versions[0], 'lib', 'node_modules'));
           }
@@ -130,7 +138,11 @@ function getPlaywrightCliPath() {
       // Volta shims — try to find the actual node_modules
       try {
         const nodeVersions = require('fs').readdirSync(join(voltaHome, 'tools', 'image', 'node'))
-          .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+          .sort((a, b) => {
+            // Strip 'v' prefix for consistent numeric comparison (v22.1.0 vs v20.10.0)
+            const av = a.replace(/^v/, ''), bv = b.replace(/^v/, '');
+            return bv.localeCompare(av, undefined, { numeric: true });
+          });
         if (nodeVersions[0]) {
           probePaths.push(join(voltaHome, 'tools', 'image', 'node', nodeVersions[0], 'lib', 'node_modules'));
         }

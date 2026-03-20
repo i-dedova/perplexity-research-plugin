@@ -30,7 +30,7 @@ const fileLog = logger.create(`hook-${date}`);
     }
     const cleanupScript = join(PLUGIN_ROOT, 'scripts', 'cleanup.js');
     const child = spawn(process.execPath, [cleanupScript, '--force'], {
-      detached: true, stdio: 'ignore', windowsHide: true
+      detached: true, stdio: ['ignore', 'ignore', 'ignore'], windowsHide: true
     });
     child.unref();
     fileLog.info(`cleanup: triggered (last: ${lastCleanup ? lastCleanup.toISOString() : 'never'})`);

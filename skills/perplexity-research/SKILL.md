@@ -89,6 +89,14 @@ Use AskUserQuestion to confirm scope and strategy with the user.
 
 **Parallel Limit:** Maximum 10 concurrent agents (sessions 0-9).
 
+### Reference: Browser by Platform
+
+| Platform | Default Browser | Notes |
+|----------|----------------|-------|
+| Windows | msedge | Pre-installed |
+| macOS | chrome | Install Chrome or use `--browser chromium` |
+| Linux | chrome | Install Chrome or use `--browser chromium` |
+
 ## Step 3: Create Task List
 
 Create ONE task to track the overall research workflow (agents manage their own sub-tasks internally):

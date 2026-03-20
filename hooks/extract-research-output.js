@@ -68,7 +68,8 @@ function determineFinalOutput(responseFile, synthesisFile) {
  * Copy output file to docs/research/ for single-agent strategy.
  */
 function preserveSingleOutput(outputPath, topicSlug, cwd) {
-  const resolved = resolve(outputPath.replace(/\//g, sep));
+  // Normalize all separators to OS-native before resolving
+  const resolved = resolve(outputPath.replace(/[\\/]/g, sep));
 
   if (!existsSync(resolved)) {
     log.warn(`Output file not found for copy: ${resolved}`);

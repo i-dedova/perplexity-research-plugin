@@ -58,6 +58,7 @@ function getSetupStatus() {
   }
 
   const status = {
+    platform: platform.getPlatform(),
     playwrightCli: {
       installed: cliCheck.installed,
       version: cliCheck.version

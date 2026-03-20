@@ -13,7 +13,7 @@
  *   node cleanup.js --status     - Show cleanup status
  */
 
-const { existsSync, readdirSync, statSync, unlinkSync, rmdirSync } = require('fs');
+const { existsSync, readdirSync, statSync, unlinkSync, rmSync } = require('fs');
 const { join } = require('path');
 
 // Import shared lib
@@ -69,7 +69,7 @@ function cleanDirectory(dirPath, dryRun = false) {
         fileCount += subResult.fileCount;
 
         if (!dryRun) {
-          try { rmdirSync(file.path); } catch {}
+          try { rmSync(file.path, { recursive: true, force: true }); } catch {}
         }
       } else {
         totalSize += file.size;

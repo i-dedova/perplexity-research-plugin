@@ -8,7 +8,7 @@
  * - Session pool checking
  */
 
-const { existsSync, readFileSync, cpSync } = require('fs');
+const { existsSync, readFileSync, cpSync, rmSync } = require('fs');
 const { join } = require('path');
 const { PATHS, DEFAULTS, getBrowser, ensureConfigDir } = require('./config');
 const { getPlaywrightSessionDir } = require('./platform');
@@ -198,7 +198,7 @@ function copySessionFrom(targetSessionId, donorSessionId, browser) {
 
   // Remove old target if exists
   if (existsSync(targetPath)) {
-    const { rmSync } = require('fs');
+
     rmSync(targetPath, { recursive: true, force: true });
   }
 
@@ -238,7 +238,7 @@ function copySessionFromMaster(targetSessionId, browser) {
 
   // Remove old target if exists
   if (existsSync(targetPath)) {
-    const { rmSync } = require('fs');
+
     rmSync(targetPath, { recursive: true, force: true });
   }
 

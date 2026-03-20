@@ -57,7 +57,10 @@ Run both commands — the first creates the wrapper, the second makes it availab
 
 Use AskUserQuestion:
 - **Question:** "Which browser for Perplexity automation?"
-- **Options:** MS Edge (Recommended), Chrome
+- **Options (Windows):** MS Edge (Recommended), Chrome
+- **Options (macOS/Linux):** Chrome (Recommended), MS Edge (if installed)
+
+Check the preflight `platform` field to determine which options to show.
 
 Save:
 ```bash

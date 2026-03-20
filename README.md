@@ -140,7 +140,7 @@ The plugin creates a `.claude/perplexity/` directory for all persistent state:
 
 ```yaml
 ---
-browser: msedge            # msedge or chrome
+browser: msedge            # msedge (Windows) or chrome (macOS/Linux)
 cleanup_days: 7            # 1-30 days
 log_retention_days: 7      # 1-30 days
 default_model: dynamic     # dynamic, best, or model slug
@@ -301,7 +301,7 @@ npm link --prefix ~/.claude/plugins/perplexity-research
 ### 2. Create Master Session
 
 ```bash
-PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli open https://perplexity.ai --persistent --headed --browser msedge
+PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli open https://perplexity.ai --persistent --headed --browser msedge  # or chrome on macOS/Linux
 # Log in manually, then:
 PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli close
 ```

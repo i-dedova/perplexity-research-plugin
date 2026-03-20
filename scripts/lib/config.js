@@ -28,7 +28,7 @@ const PATHS = {
 //region Defaults
 
 const DEFAULTS = {
-  browser: 'msedge',
+  browser: process.platform === 'win32' ? 'msedge' : 'chrome',
   cleanupDays: 7,
   minCleanupDays: 1,
   maxCleanupDays: 30,
@@ -80,7 +80,7 @@ function getConfig() {
 
   try {
     const content = readFileSync(PATHS.configFile, 'utf8');
-    const match = content.match(/^---\n([\s\S]*?)\n---/);
+    const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
     if (match) {
       const yaml = match[1];
 

@@ -149,6 +149,81 @@ function run() {
     assert(home, 'homedir() should return value');
     assert(existsSync(home), 'Home directory should exist');
   });
+
+  // === Cross-Platform Session Directory ===
+  log('\n=== Cross-Platform Session Directory ===');
+
+  test('getPlaywrightSessionDir returns correct OS path format', () => {
+    const dir = platformMod.getPlaywrightSessionDir();
+    if (dir === null) return; // No daemon dir — skip
+    const p = platform();
+    if (p === 'win32') {
+      assert(dir.includes('ms-playwright'), 'Windows: should contain ms-playwright');
+      assert(dir.includes('Local') || dir.includes('AppData'), 'Windows: should be in AppData/Local');
+    } else if (p === 'darwin') {
+      assert(dir.includes('Library/Application Support/ms-playwright'), 'macOS: should be in Library/Application Support');
+    } else {
+      assert(dir.includes('.local/share/ms-playwright'), 'Linux: should be in .local/share');
+    }
+  });
+
+  test('getPlaywrightSessionDir path uses correct separators', () => {
+    const dir = platformMod.getPlaywrightSessionDir();
+    if (dir === null) return;
+    if (platform() !== 'win32') {
+      assert(!dir.includes('\\'), 'Unix paths should not contain backslashes');
+    }
+  });
+
+  // === Cross-Platform Default Browser ===
+  log('\n=== Cross-Platform Default Browser ===');
+
+  test('default browser matches platform', () => {
+    const { DEFAULTS } = lib();
+    if (platform() === 'win32') {
+      assertEqual(DEFAULTS.browser, 'msedge', 'Windows default should be msedge');
+    } else {
+      assertEqual(DEFAULTS.browser, 'chrome', 'macOS/Linux default should be chrome');
+    }
+  });
+
+  test('getBrowser returns valid browser name', () => {
+    const { config } = lib();
+    const browser = config.getBrowser();
+    assert(['msedge', 'chrome', 'chromium'].includes(browser),
+      `Browser should be msedge, chrome, or chromium. Got: ${browser}`);
+  });
+
+  // === Cross-Platform CLI Path Resolution ===
+  log('\n=== Cross-Platform CLI Path Resolution ===');
+
+  test('getPlaywrightCliPath resolves on this platform', () => {
+    const { playwright } = lib();
+    const jsPath = playwright.getPlaywrightCliPath();
+    if (jsPath) {
+      assert(existsSync(jsPath), `Resolved CLI path should exist: ${jsPath}`);
+      assert(jsPath.endsWith('playwright-cli.js'), 'Should point to playwright-cli.js');
+    }
+    // null is OK — fallback to execSync works
+  });
+
+  // === Cross-Platform Log Directory ===
+  log('\n=== Cross-Platform Log Directory ===');
+
+  test('log directory path is valid', () => {
+    const { join } = require('path');
+    const { PATHS } = lib();
+    assert(PATHS.logsDir, 'logsDir should exist');
+    assert(PATHS.logsDir.includes('.claude'), 'logsDir should be under .claude');
+    assert(PATHS.logsDir.includes('perplexity'), 'logsDir should be under perplexity');
+  });
+
+  test('logger creates log file', () => {
+    const { logger } = lib();
+    const testLog = logger.create('ci-platform-test');
+    testLog.info('cross-platform log test');
+    // Logger should not throw on any platform
+  });
 }
 
 module.exports = { run };

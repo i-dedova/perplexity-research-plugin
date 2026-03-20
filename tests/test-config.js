@@ -36,7 +36,8 @@ function run() {
   });
 
   test('DEFAULTS has required keys', () => {
-    assertEqual(DEFAULTS.browser, 'msedge', 'Default browser');
+    const expectedBrowser = process.platform === 'win32' ? 'msedge' : 'chrome';
+    assertEqual(DEFAULTS.browser, expectedBrowser, 'Default browser should match platform');
     assertEqual(DEFAULTS.cleanupDays, 7, 'Default cleanup days');
     assertEqual(DEFAULTS.minCleanupDays, 1, 'Min cleanup days');
     assertEqual(DEFAULTS.maxCleanupDays, 30, 'Max cleanup days');
@@ -223,6 +224,74 @@ function run() {
     assert('defaultModel' in cfg, 'Should have defaultModel');
     assert('defaultThinking' in cfg, 'Should have defaultThinking');
     assert('subscriptionTier' in cfg, 'Should have subscriptionTier');
+  });
+
+  // === Config CRLF Handling ===
+  log('\n=== Config CRLF Handling ===');
+
+  test('config parser handles CRLF line endings', () => {
+    const { writeFileSync, readFileSync, renameSync } = require('fs');
+    const configFile = PATHS.configFile;
+    const backupFile = configFile + '.crlf-test-backup';
+    const hadConfig = existsSync(configFile);
+
+    if (hadConfig) {
+      renameSync(configFile, backupFile);
+    }
+
+    try {
+      // Write config with CRLF (simulates Windows Notepad)
+      const crlfContent = '---\r\nbrowser: chrome\r\ncleanup_days: 5\r\nlog_retention_days: 3\r\ndefault_model: best\r\ndefault_thinking: true\r\nsubscription_tier: max\r\nlast_cleanup: null\r\n---\r\n';
+      writeFileSync(configFile, crlfContent, 'utf8');
+
+      const cfg = config.getConfig();
+      assertEqual(cfg.browser, 'chrome', 'CRLF: browser should parse');
+      assertEqual(cfg.cleanupDays, 5, 'CRLF: cleanupDays should parse');
+      assertEqual(cfg.defaultModel, 'best', 'CRLF: defaultModel should parse');
+      assertEqual(cfg.subscriptionTier, 'max', 'CRLF: subscriptionTier should parse');
+    } finally {
+      if (hadConfig) {
+        renameSync(backupFile, configFile);
+      } else {
+        try { require('fs').unlinkSync(configFile); } catch {}
+      }
+    }
+  });
+
+  // === Config Write/Read Cycle ===
+  log('\n=== Config Write/Read Cycle ===');
+
+  test('writeConfig and getConfig roundtrip preserves all values', () => {
+    const { renameSync } = require('fs');
+    const configFile = PATHS.configFile;
+    const backupFile = configFile + '.roundtrip-backup';
+    const hadConfig = existsSync(configFile);
+
+    if (hadConfig) {
+      renameSync(configFile, backupFile);
+    }
+
+    try {
+      // Write via public API
+      config.setBrowser('chrome');
+      config.setCleanupDays(3);
+      config.setDefaultModel('best');
+      config.setSubscriptionTier('max');
+
+      // Read back
+      const cfg = config.getConfig();
+      assertEqual(cfg.browser, 'chrome', 'Roundtrip: browser');
+      assertEqual(cfg.cleanupDays, 3, 'Roundtrip: cleanupDays');
+      assertEqual(cfg.defaultModel, 'best', 'Roundtrip: defaultModel');
+      assertEqual(cfg.subscriptionTier, 'max', 'Roundtrip: subscriptionTier');
+      assertEqual(cfg.exists, true, 'Roundtrip: config should exist');
+    } finally {
+      if (hadConfig) {
+        renameSync(backupFile, configFile);
+      } else {
+        try { require('fs').unlinkSync(configFile); } catch {}
+      }
+    }
   });
 
   // === Fresh Install Preflight (no defaults leak) ===
