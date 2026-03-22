@@ -169,9 +169,9 @@ Ensure output directory exists: `{project}/docs/research/`
 
 ### Single Agent Output
 
-The SubagentStop hook automatically copies single-agent output to `docs/research/{topic-slug}.md`. A PostToolUse hook then injects the saved file path into your context as `additionalContext`.
+The SubagentStop hook automatically copies single-agent output to `docs/research/{topic-slug}.md` and injects the saved file path into your context as `additionalContext`.
 
-**If you see the `additionalContext` with the saved path:** The file is already saved — just verify it exists and present results.
+**If you see the `additionalContext` with the saved path:** The file is already saved — verify it exists and present results.
 
 **If no `additionalContext` appears (fallback):**
 1. Read the file path from agent output

@@ -10,7 +10,7 @@
  * 5. Log all actions
  */
 
-const { readFileSync, existsSync, copyFileSync, mkdirSync, readdirSync, writeFileSync } = require('fs');
+const { readFileSync, existsSync, copyFileSync, mkdirSync, readdirSync } = require('fs');
 const { join, resolve, sep } = require('path');
 
 const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || join(__dirname, '..');
@@ -85,22 +85,6 @@ function preserveSingleOutput(outputPath, topicSlug, cwd) {
   return destFile;
 }
 
-/**
- * Write breadcrumb JSON for PostToolUse:Task handler.
- */
-function writeBreadcrumb(data, cwd) {
-  const breadcrumbPath = join(cwd, '.playwright-cli', '.research-output.json');
-  try {
-    writeFileSync(breadcrumbPath, JSON.stringify({
-      ...data,
-      timestamp: Date.now(),
-    }));
-    log.info(`Breadcrumb written: ${breadcrumbPath}`);
-  } catch (e) {
-    log.warn(`Failed to write breadcrumb: ${e.message}`);
-  }
-}
-
 //endregion
 
 function main() {
@@ -158,11 +142,6 @@ function main() {
   let savedTo = null;
   if (strategy === 'single' && finalOutput) {
     savedTo = preserveSingleOutput(finalOutput, topicSlug, process.cwd());
-  }
-
-  // Write breadcrumb for PostToolUse:Task handler
-  if (savedTo || finalOutput) {
-    writeBreadcrumb({ savedTo, outputType, topicSlug, finalOutput, strategy }, process.cwd());
   }
 
   // Clean up session state (moved here from cmdClose)
