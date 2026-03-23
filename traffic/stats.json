@@ -1,0 +1,191 @@
+{
+  "clones": {
+    "2026-03-09": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-10": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-11": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-12": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-13": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-14": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-15": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-16": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-17": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-18": {
+      "count": 123,
+      "uniques": 56
+    },
+    "2026-03-19": {
+      "count": 65,
+      "uniques": 22
+    },
+    "2026-03-20": {
+      "count": 38,
+      "uniques": 12
+    },
+    "2026-03-21": {
+      "count": 1,
+      "uniques": 1
+    },
+    "2026-03-22": {
+      "count": 22,
+      "uniques": 6
+    }
+  },
+  "views": {
+    "2026-03-09": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-10": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-11": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-12": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-13": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-14": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-15": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-16": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-17": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-03-18": {
+      "count": 35,
+      "uniques": 7
+    },
+    "2026-03-19": {
+      "count": 42,
+      "uniques": 19
+    },
+    "2026-03-20": {
+      "count": 19,
+      "uniques": 7
+    },
+    "2026-03-21": {
+      "count": 5,
+      "uniques": 3
+    },
+    "2026-03-22": {
+      "count": 3,
+      "uniques": 3
+    }
+  },
+  "referrers": {
+    "2026-03-09..2026-03-22": [
+      {
+        "referrer": "linkedin.com",
+        "count": 57,
+        "uniques": 28
+      },
+      {
+        "referrer": "github.com",
+        "count": 8,
+        "uniques": 2
+      },
+      {
+        "referrer": "com.linkedin.android",
+        "count": 6,
+        "uniques": 3
+      }
+    ]
+  },
+  "paths": {
+    "2026-03-09..2026-03-22": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 65,
+        "uniques": 37
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master",
+        "count": 6,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.claude-plugin",
+        "count": 3,
+        "uniques": 3
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/skills/perplexity-research",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/bin/ppx-research.js",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/skills/perplexity-research/SKILL.md",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/bin",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/branches",
+        "count": 2,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/main/scripts/lib/platform.js",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/.claude-plugin/marketplace.json",
+        "count": 1,
+        "uniques": 1
+      }
+    ]
+  }
+}
