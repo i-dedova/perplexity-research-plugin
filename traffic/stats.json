@@ -55,6 +55,14 @@
     "2026-03-22": {
       "count": 22,
       "uniques": 6
+    },
+    "2026-03-23": {
+      "count": 23,
+      "uniques": 9
+    },
+    "2026-03-24": {
+      "count": 1,
+      "uniques": 1
     }
   },
   "views": {
@@ -113,6 +121,14 @@
     "2026-03-22": {
       "count": 3,
       "uniques": 3
+    },
+    "2026-03-23": {
+      "count": 21,
+      "uniques": 3
+    },
+    "2026-03-24": {
+      "count": 18,
+      "uniques": 3
     }
   },
   "referrers": {
@@ -131,6 +147,23 @@
         "referrer": "com.linkedin.android",
         "count": 6,
         "uniques": 3
+      }
+    ],
+    "2026-03-11..2026-03-24": [
+      {
+        "referrer": "linkedin.com",
+        "count": 58,
+        "uniques": 28
+      },
+      {
+        "referrer": "github.com",
+        "count": 39,
+        "uniques": 3
+      },
+      {
+        "referrer": "com.linkedin.android",
+        "count": 7,
+        "uniques": 4
       }
     ]
   },
@@ -184,6 +217,58 @@
       {
         "path": "/i-dedova/perplexity-research-plugin/blob/master/.claude-plugin/marketplace.json",
         "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-03-11..2026-03-24": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 75,
+        "uniques": 38
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 15,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulse",
+        "count": 6,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master",
+        "count": 6,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.claude-plugin",
+        "count": 3,
+        "uniques": 3
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/skills/perplexity-research",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/bin/ppx-research.js",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/skills/perplexity-research/SKILL.md",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/bin",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/branches",
+        "count": 2,
         "uniques": 1
       }
     ]
