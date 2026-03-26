@@ -38,7 +38,8 @@ const DEFAULTS = {
   sessionExpiryBufferHours: 1,
   defaultModel: 'dynamic',
   defaultThinking: 'dynamic',
-  subscriptionTier: 'pro'
+  subscriptionTier: 'pro',
+  outputDir: 'docs/research'
 };
 
 const VALID_MODELS = {
@@ -71,6 +72,7 @@ function getConfig() {
     defaultModel: null,
     defaultThinking: null,
     subscriptionTier: null,
+    outputDir: null,
     lastCleanup: null
   };
 
@@ -136,6 +138,15 @@ function getConfig() {
         const tier = tierMatch[1].toLowerCase();
         if (['pro', 'max'].includes(tier)) {
           result.subscriptionTier = tier;
+        }
+      }
+
+      // Parse output_dir
+      const outputDirMatch = yaml.match(/output_dir:\s*(.+)/);
+      if (outputDirMatch) {
+        const dir = outputDirMatch[1].trim();
+        if (dir && dir !== 'null') {
+          result.outputDir = dir;
         }
       }
 
@@ -207,6 +218,15 @@ function getSubscriptionTier() {
 }
 
 /**
+ * Get output directory, with fallback to default
+ * @returns {string}
+ */
+function getOutputDir() {
+  const config = getConfig();
+  return config.outputDir || DEFAULTS.outputDir;
+}
+
+/**
  * Get display name for a model slug
  * @param {string} slug
  * @returns {string|null}
@@ -254,7 +274,7 @@ function ensureConfigDir() {
  * @param {string} [opts.lastCleanup] - ISO timestamp of last cleanup run
  */
 function writeConfig(opts) {
-  const { browser, cleanupDays, logRetentionDays, defaultModel, defaultThinking, subscriptionTier, lastCleanup } = opts;
+  const { browser, cleanupDays, logRetentionDays, defaultModel, defaultThinking, subscriptionTier, outputDir, lastCleanup } = opts;
 
   ensureConfigDir();
 
@@ -262,6 +282,7 @@ function writeConfig(opts) {
   const model = defaultModel ?? DEFAULTS.defaultModel;
   const thinking = defaultThinking ?? DEFAULTS.defaultThinking;
   const tier = subscriptionTier ?? DEFAULTS.subscriptionTier;
+  const outDir = outputDir ?? 'null';
   const cleanup = lastCleanup ?? 'null';
 
   const content = `---
@@ -271,6 +292,7 @@ log_retention_days: ${logDays}
 default_model: ${model}
 default_thinking: ${thinking}
 subscription_tier: ${tier}
+output_dir: ${outDir}
 last_cleanup: ${cleanup}
 ---
 
@@ -286,11 +308,12 @@ Edit the YAML frontmatter above to change settings:
 | default_model | \`dynamic\`, \`best\`, or model slug | AI model for research queries |
 | default_thinking | \`dynamic\`, \`true\`, \`false\` | Enable reasoning/thinking mode |
 | subscription_tier | \`pro\` or \`max\` | Perplexity subscription level |
+| output_dir | Folder path relative to project | Where research outputs are saved (e.g. \`docs/research\`) |
 
 **Models:** best, sonar, gpt-5.4, gemini-3.1-pro, claude-sonnet-4.6, nemotron-3-super, claude-opus-4.6 (max tier)
 
 **Temp files cleaned:** Playwright logs, page snapshots, response downloads.
-Your final research output (in docs/research/) is never deleted.
+Your final research output is never deleted.
 `;
 
   writeFileSync(PATHS.configFile, content, 'utf8');
@@ -316,6 +339,7 @@ function setBrowser(browser) {
     defaultModel: current.defaultModel,
     defaultThinking: current.defaultThinking,
     subscriptionTier: current.subscriptionTier,
+    outputDir: current.outputDir,
     lastCleanup: current.lastCleanup
   });
   return { browser: normalized, configFile: PATHS.configFile };
@@ -343,6 +367,7 @@ function setCleanupDays(days) {
     defaultModel: current.defaultModel,
     defaultThinking: current.defaultThinking,
     subscriptionTier: current.subscriptionTier,
+    outputDir: current.outputDir,
     lastCleanup: current.lastCleanup
   });
   return { cleanupDays: daysNum, configFile: PATHS.configFile };
@@ -370,6 +395,7 @@ function setLogRetentionDays(days) {
     defaultModel: current.defaultModel,
     defaultThinking: current.defaultThinking,
     subscriptionTier: current.subscriptionTier,
+    outputDir: current.outputDir,
     lastCleanup: current.lastCleanup
   });
   return { logRetentionDays: daysNum, configFile: PATHS.configFile };
@@ -394,6 +420,7 @@ function setDefaultModel(model) {
     defaultModel: normalized,
     defaultThinking: current.defaultThinking,
     subscriptionTier: current.subscriptionTier,
+    outputDir: current.outputDir,
     lastCleanup: current.lastCleanup
   });
   return { defaultModel: normalized, configFile: PATHS.configFile };
@@ -417,6 +444,7 @@ function setDefaultThinking(thinking) {
     defaultModel: current.defaultModel,
     defaultThinking: normalized,
     subscriptionTier: current.subscriptionTier,
+    outputDir: current.outputDir,
     lastCleanup: current.lastCleanup
   });
   return { defaultThinking: normalized, configFile: PATHS.configFile };
@@ -440,9 +468,43 @@ function setSubscriptionTier(tier) {
     defaultModel: current.defaultModel,
     defaultThinking: current.defaultThinking,
     subscriptionTier: normalized,
+    outputDir: current.outputDir,
     lastCleanup: current.lastCleanup
   });
   return { subscriptionTier: normalized, configFile: PATHS.configFile };
+}
+
+/**
+ * Set output directory (preserves other settings)
+ * @param {string} dir - Relative folder path (e.g. 'docs/research', 'output/perplexity')
+ */
+function setOutputDir(dir) {
+  if (!dir || typeof dir !== 'string') {
+    throw new Error('Invalid output_dir: must be a non-empty string.');
+  }
+  const trimmed = dir.trim().replace(/[\\/]+$/, ''); // strip trailing slashes
+  if (!trimmed) {
+    throw new Error('Invalid output_dir: must be a non-empty string.');
+  }
+  if (/^[/~]/.test(trimmed) || /^[A-Za-z]:/.test(trimmed)) {
+    throw new Error(`Invalid output_dir: "${trimmed}" looks like an absolute path. Use a relative folder name (e.g. docs/research).`);
+  }
+  if (trimmed.includes('..')) {
+    throw new Error(`Invalid output_dir: "${trimmed}" contains directory traversal (..). Use a simple relative path.`);
+  }
+
+  const current = getConfig();
+  writeConfig({
+    browser: current.browser || DEFAULTS.browser,
+    cleanupDays: current.cleanupDays || DEFAULTS.cleanupDays,
+    logRetentionDays: current.logRetentionDays || DEFAULTS.logRetentionDays,
+    defaultModel: current.defaultModel,
+    defaultThinking: current.defaultThinking,
+    subscriptionTier: current.subscriptionTier,
+    outputDir: trimmed,
+    lastCleanup: current.lastCleanup
+  });
+  return { outputDir: trimmed, configFile: PATHS.configFile };
 }
 
 /**
@@ -458,6 +520,7 @@ function setLastCleanup(isoTimestamp) {
     defaultModel: current.defaultModel,
     defaultThinking: current.defaultThinking,
     subscriptionTier: current.subscriptionTier,
+    outputDir: current.outputDir,
     lastCleanup: isoTimestamp
   });
 }
@@ -539,6 +602,7 @@ module.exports = {
   getDefaultModel,
   getDefaultThinking,
   getSubscriptionTier,
+  getOutputDir,
   getModelDisplayName,
   getModelsForTier,
   ensureConfigDir,
@@ -549,6 +613,7 @@ module.exports = {
   setDefaultModel,
   setDefaultThinking,
   setSubscriptionTier,
+  setOutputDir,
   setLastCleanup,
   getTrackedDirs,
   saveTrackedDirs,

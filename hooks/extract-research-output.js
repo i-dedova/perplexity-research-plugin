@@ -5,7 +5,7 @@
  * Responsibilities:
  * 1. Extract output file path from agent transcript
  * 2. Read session state to determine strategy (single/parallel)
- * 3. If single: copy output file to docs/research/{topic-slug}.md
+ * 3. If single: copy output file to configured output directory
  * 4. Always: clean up session state file (moved here from cmdClose)
  * 5. Log all actions
  */
@@ -14,7 +14,7 @@ const { readFileSync, existsSync, copyFileSync, mkdirSync, readdirSync } = requi
 const { join, resolve, sep } = require('path');
 
 const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || join(__dirname, '..');
-const { sessionState, logger } = require(join(PLUGIN_ROOT, 'scripts', 'lib'));
+const { sessionState, logger, config } = require(join(PLUGIN_ROOT, 'scripts', 'lib'));
 
 const date = new Date().toISOString().slice(0, 10);
 const log = logger.create(`hook-extract-${date}`);
@@ -76,8 +76,22 @@ function preserveSingleOutput(outputPath, topicSlug, cwd) {
     return null;
   }
 
-  const outputDir = join(cwd, 'docs', 'research');
-  mkdirSync(outputDir, { recursive: true });
+  // Read configured output directory
+  const cfg = config.getConfig();
+  if (!cfg.outputDir) {
+    log.error('output_dir not configured. Run /perplexity-setup to set output directory.');
+    return null;
+  }
+
+  const outputDir = join(cwd, cfg.outputDir);
+  log.info(`Output directory: ${outputDir}`);
+
+  try {
+    mkdirSync(outputDir, { recursive: true });
+  } catch (e) {
+    log.error(`Failed to create output directory ${outputDir}: ${e.message}`);
+    return null;
+  }
 
   const destFile = join(outputDir, `${topicSlug || 'research'}.md`);
   copyFileSync(resolved, destFile);
@@ -138,7 +152,7 @@ function main() {
     }
   }
 
-  // Single-agent strategy: copy output to docs/research/
+  // Single-agent strategy: copy output to configured output directory
   let savedTo = null;
   if (strategy === 'single' && finalOutput) {
     savedTo = preserveSingleOutput(finalOutput, topicSlug, process.cwd());

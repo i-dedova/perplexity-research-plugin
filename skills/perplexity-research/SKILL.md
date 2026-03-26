@@ -1,6 +1,7 @@
 ---
 name: perplexity-research
-description: REQUIRED before spawning any research agent. Triggers on research, investigate, find out, look up, deep dive, fact-check, or any web research need. Confirms scope, mode (search vs deep), and strategy with the user. Deep mode is single-prompt only — plan carefully. Always invoke this skill before spawning research-agent(s).
+description: Research via Perplexity automation. Triggers on research, investigate, find out, look up, deep dive, fact-check, or any web research need. Confirms scope, mode (search vs deep), and strategy with the user when unclear. Deep mode is single-prompt only — plan carefully.
+user-invocable: true
 version: 1.0.0
 ---
 
@@ -165,18 +166,18 @@ Use Session: 0, Strategy: single. For deep mode, the agent does: start → downl
 
 ## Step 6: Save Final Research Document
 
-Ensure output directory exists: `{project}/docs/research/`
+Read the configured output directory from preflight: `ppx-research setup preflight` → `config.outputDir`. Ensure the directory exists in the project.
 
 ### Single Agent Output
 
-The SubagentStop hook automatically copies single-agent output to `docs/research/{topic-slug}.md` and injects the saved file path into your context as `additionalContext`.
+The SubagentStop hook automatically copies single-agent output to `{outputDir}/{topic-slug}.md` (configured directory) and injects the saved file path into your context as `additionalContext`.
 
 **If you see the `additionalContext` with the saved path:** The file is already saved — verify it exists and present results.
 
 **If no `additionalContext` appears (fallback):**
 1. Read the file path from agent output
 2. Read the file content
-3. Write to `{project}/docs/research/{topic-slug}.md`
+3. Write to `{project}/{outputDir}/{topic-slug}.md`
 
 ### Parallel Agent Output
 
@@ -184,7 +185,7 @@ Multiple agents produced separate outputs. Synthesize into one document.
 
 1. Read ALL returned file paths
 2. Read each file's content
-3. Create `{project}/docs/research/{topic-slug}.md` using this template:
+3. Create `{project}/{outputDir}/{topic-slug}.md` using this template:
 
 ```markdown
 # Research: {Topic Title}
@@ -241,7 +242,7 @@ Present final output:
 ```
 **Research Complete: {topic}**
 
-**Saved:** `{project}/docs/research/{topic-slug}.md`
+**Saved:** `{project}/{outputDir}/{topic-slug}.md`
 
 **Approach:** {Single | Parallel ({N} agents)}
 

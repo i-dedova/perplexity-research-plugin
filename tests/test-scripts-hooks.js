@@ -79,6 +79,11 @@ function run() {
            'Help output should mention usage');
   });
 
+  test('setup.js --help mentions set-output-dir', () => {
+    const result = runScript('setup.js', '--help');
+    assert(result.includes('set-output-dir'), 'Help should mention set-output-dir command');
+  });
+
   test('setup.js check runs without error', () => {
     const result = runScript('setup.js', 'check');
     assert(result.includes('Perplexity Research Plugin') || result.includes('playwright-cli'),
@@ -219,6 +224,13 @@ function run() {
   });
 
   test('extract-research-output.js copies file for single strategy', () => {
+    // Ensure output_dir is configured (hook requires it)
+    const { config: cfgModule } = lib();
+    const cfgBefore = cfgModule.getConfig();
+    if (!cfgBefore.outputDir) {
+      cfgModule.setOutputDir('docs/research');
+    }
+
     const testSessionId = 997;
     const testSlug = 'hook-single-test';
 
@@ -272,6 +284,13 @@ function run() {
   });
 
   test('extract-research-output.js handles markdown-wrapped paths (regex bug)', () => {
+    // Ensure output_dir is configured (hook requires it)
+    const { config: cfgModule } = lib();
+    const cfgBefore = cfgModule.getConfig();
+    if (!cfgBefore.outputDir) {
+      cfgModule.setOutputDir('docs/research');
+    }
+
     const testSessionId = 996;
     const testSlug = 'hook-markdown-test';
 

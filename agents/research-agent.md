@@ -1,6 +1,6 @@
 ---
 name: research-agent
-description: "Autonomous Perplexity research agent. Executes research via Playwright CLI.\n\nALWAYS use the `perplexity-research` skill first to confirm scope, mode, and strategy with the user. Do not spawn this agent directly. Deep mode is single-prompt only — use thoughtfully.\n\nSingle topic = one agent. Multiple independent topics = parallel agents with unique Session IDs (0-9). Always run_in_background.\n\nIMPORTANT: A PreToolUse hook validates your prompt and REJECTS it if required fields are missing. You MUST use this exact format:\n\nQuestion: {research question}\n\nContext: {background, current state, problem, success criteria — min 20 chars}\n\nMode: {search|deep}\nModel: {best|sonar|gpt-5.4|...}\nThinking: {true|false}\nTopicSlug: {lowercase-hyphen-slug}\nSession: {0-9}\nStrategy: {single|parallel}\nSources: {web|academic|social}"
+description: "Autonomous Perplexity research agent. Executes research via Playwright CLI. Use the `perplexity-research` skill to confirm scope, mode, and strategy with the user when unclear. Mode selection — choose by question complexity, not user wording: search is DEFAULT for focused questions, factual lookups, how-to, comparisons, follow-up chains; deep is ONLY for single-prompt comprehensive multi-faceted analysis requiring autonomous multi-step research with no follow-ups (5-10 minutes); when unsure → search. Single topic = one agent. Multiple independent topics = parallel agents with unique Session IDs (0-9). Always run_in_background.\n\nA PreToolUse hook validates the prompt. Required format:\n\nQuestion: {research question}\n\nContext: {background, current state, problem, success criteria — min 20 chars}\n\nMode: {search|deep}\nModel: {best|sonar|gpt-5.4|...}\nThinking: {true|false}\nTopicSlug: {lowercase-hyphen-slug}\nSession: {0-9}\nStrategy: {single|parallel}\nSources: {web|academic|social}"
 model: sonnet
 color: cyan
 tools: Bash, Read, Write, TaskCreate, TaskUpdate, TaskList
@@ -67,11 +67,10 @@ Your FIRST response MUST emit ALL of the following as **parallel tool calls in a
 
 **The start command includes `--ensure` which validates the session inline (fast no-op if the PreToolUse hook already started it, full recovery if it didn't).**
 
-**CRITICAL TIMEOUT:** Deep research takes 3-5 minutes. You MUST set `timeout: 600000` on the Bash tool call. Without this, the default 2-minute timeout will kill the command and you will lose the research.
+**CRITICAL TIMEOUT:** ALWAYS set `timeout: 600000` on the Bash tool call for the start command — regardless of mode. Deep mode takes 5-10 minutes. Search mode with thinking or auto-routed models (`best`) can take 3+ minutes. Without this, the default 2-minute timeout kills the command and the research is lost.
 
 ```bash
-# For deep mode — MUST use timeout: 600000
-# For search mode — default timeout is fine
+# ALWAYS use timeout: 600000 on this Bash call
 ppx-research start --ensure \
   --question "{QUESTION}" \
   --context "{CONTEXT}" \

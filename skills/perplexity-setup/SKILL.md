@@ -1,7 +1,8 @@
 ---
 name: perplexity-setup
-description: One-time plugin setup
-allowed-tools: Read, Edit, Bash, AskUserQuestion
+description: One-time Perplexity research plugin setup. Detects existing configuration and only runs missing steps. Use when sessions are expired, browser needs changing, or first-time setup.
+user-invocable: true
+version: 1.0.0
 ---
 
 # Perplexity Research Plugin Setup
@@ -19,6 +20,10 @@ ppx-research setup preflight
 Parse JSON output:
 - `isComplete: true` → Jump to Completion message
 - `missing` array → Run only those steps below
+
+**If `platform` is `macos` AND steps 7 or 8 will run** (i.e., `master-session` or `expired-pool` in `missing` array, or `sessions.healthy` is false):
+
+Tell the user: "Heads up — macOS will prompt you for a few permissions during setup. When the browser opens, your terminal app may need **Accessibility** access. During session cloning, the plugin minimizes browser windows using AppleScript, which requires **System Events** access. Allow both when prompted — they're one-time approvals that macOS requires for any app automating browsers."
 
 ---
 
@@ -39,8 +44,6 @@ After install, verify with `playwright-cli --version`.
 ## Step 3: Register CLI alias
 
 **Always run** (even on re-setup — ensures alias exists after upgrades).
-
-**IMPORTANT: Do NOT use `npm link`. Use the install-alias.sh script below — npm link breaks on marketplace installs.**
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/install-alias.sh"
@@ -119,20 +122,36 @@ ppx-research setup set-cleanup {days}
 
 ---
 
-## Step 7: Create Master Session
+## Step 7: Output Directory
+
+**Skip if:** `config.outputDir` exists in preflight JSON (not null)
+
+Use AskUserQuestion:
+- **Question:** "Where should research outputs be saved? Enter a folder name — it will be created inside each project directory. Nested paths like docs/research/perplexity are supported. Default: docs/research"
+
+Save the user's answer (or `docs/research` if they accept the default):
+```bash
+ppx-research setup set-output-dir {value}
+```
+
+---
+
+## Step 8: Create Master Session
+
+**Before opening any browser**, tell the user: "A browser window will open for you to log into Perplexity. The plugin uses headed (visible) browser sessions because Perplexity's Cloudflare protection blocks headless automation."
 
 **If `sessions.healthy` is true** (script-verified: master exists, cookies valid, pool complete):
 
 Use AskUserQuestion:
 - **Question:** "Your Perplexity sessions are already set up and authenticated. Do you want to re-login?"
-- **Options:** Keep existing sessions (skip to Step 9), Re-login (new account or refresh)
+- **Options:** Keep existing sessions (skip to Step 10), Re-login (new account or refresh)
 
-**If "Keep":** Jump to Step 9.
+**If "Keep":** Jump to Step 10.
 **If "Re-login":** Continue below.
 
 **If `sessions.healthy` is false:** Check `missing` array:
 - `master-session` in missing → Run this step (login required)
-- `expired-pool` in missing but NOT `master-session` → Master is valid, jump to Step 8
+- `expired-pool` in missing but NOT `master-session` → Master is valid, jump to Step 9
 
 1. Get browser from preflight (`config.browser`)
 
@@ -152,9 +171,9 @@ PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli close
 
 ---
 
-## Step 8: Clone Session Pool
+## Step 9: Clone Session Pool
 
-**Run if:** Step 7 was executed, OR `expired-pool` in missing array (pool expired but master valid)
+**Run if:** Step 8 was executed, OR `expired-pool` in missing array (pool expired but master valid)
 
 Before running the clone command, tell the user:
 
@@ -168,7 +187,7 @@ Validates master first, clones to 0-9, then validates each session individually.
 
 ---
 
-## Step 9: CLAUDE.md Discoverability
+## Step 10: CLAUDE.md Discoverability
 
 **Skip if:** `~/.claude/CLAUDE.md` does not exist, OR `perplexity-research` is already mentioned in it.
 
@@ -209,13 +228,13 @@ Edit that file to change browser, cleanup interval, or model settings.
 
 When `isComplete: true` but user runs setup anyway:
 1. Show config file location
-2. Only re-run Steps 7-8 if `master-session` or `expired-pool` is in missing array
+2. Only re-run Steps 8-9 if `master-session` or `expired-pool` is in missing array
 3. Do NOT force re-login if sessions are healthy — the preflight determines this
 
 When `expired-pool` in missing (pool sessions expired, master still valid):
-1. Skip Step 7 (no re-login needed)
-2. Run Step 8 directly — clone-pool will overwrite expired sessions from valid master
+1. Skip Step 8 (no re-login needed)
+2. Run Step 9 directly — clone-pool will overwrite expired sessions from valid master
 
 When `master-session` in missing (master expired or missing):
 1. clone-pool will first try to promote a valid pool session to master
-2. If no valid pool sessions → Run Step 7 (re-login required) then Step 8
+2. If no valid pool sessions → Run Step 8 (re-login required) then Step 9

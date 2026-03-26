@@ -39,14 +39,14 @@ Start a new Claude Code session and run:
 /perplexity-setup
 ```
 
-The setup wizard walks you through everything:
-1. Installs `playwright-cli` (browser automation)
-2. Registers the `ppx-research` CLI alias
-3. Opens a browser for you to log into your Perplexity account
-4. Clones your authenticated session across 10 browser pools
+The setup wizard handles everything — see [Setup & Troubleshooting](#setup--troubleshooting) for details. First setup takes 3-5 minutes. After that, use `/perplexity-research [topic]` to start researching.
 
-First setup takes 3-5 minutes. After that, just use `/perplexity-research [topic]` to start researching.
 
+## Why Browser Windows?
+
+Perplexity uses Cloudflare bot protection, which detects and blocks headless browsers. A headless session — even with valid credentials — gets rejected before it can authenticate. The plugin works around this by using **headed** (visible) browser sessions with **persistent** storage. You log in once in a real browser window, and the plugin saves that authenticated state (cookies, session tokens) for reuse.
+
+During setup, you'll see browser windows open and close — this is the plugin cloning your authenticated session across 10 browser pools and validating each one. During research, sessions run in the background but still use headed mode to avoid Cloudflare detection. The plugin minimizes these windows automatically so they don't interrupt your work.
 
 ## How It Works
 
@@ -74,13 +74,14 @@ Interactive wizard (skips steps already complete):
 3. Select browser (MS Edge or Chrome)
 4. Choose model selection strategy (dynamic, auto, or fixed model)
 5. Configure cleanup interval
-6. Create master session (login to Perplexity)
-7. Clone session pool (0-9) with validation
-8. Add research instructions to `.claude/CLAUDE.md`
+6. Choose output directory for research results
+7. Create master session (login to Perplexity)
+8. Clone session pool (0-9) with validation
+9. Add research instructions to `.claude/CLAUDE.md`
 
-> **First setup takes 3-5 minutes.** Step 7 opens each session in a browser, navigates to Perplexity, and validates the login cookie individually. Browser windows will appear and disappear — that's normal. Subsequent runs skip completed steps and finish in seconds.
+> **First setup takes 3-5 minutes.** Step 8 opens each session in a browser, navigates to Perplexity, and validates the login cookie individually. Browser windows will appear and disappear — that's normal. Subsequent runs skip completed steps and finish in seconds.
 
-**You don't have to run this manually.** If setup is incomplete when you try to research, the validation hook detects what's missing and prompts Claude to run `/perplexity-setup` for you.
+If setup is incomplete when you research, the validation hook detects missing steps and prompts `/perplexity-setup` automatically.
 
 ### Re-running Setup
 
@@ -102,6 +103,7 @@ The wizard is smart: it runs a preflight check, identifies what's broken or miss
 | Not logged in / sessions expired | Run `/perplexity-setup` — it detects this and guides re-login |
 | Model not switching | Check your subscription tier in config — `claude-opus-4.6` requires Max |
 | Debugging issues | Check logs in `.claude/perplexity/logs/` |
+| macOS permission prompts | During first setup, macOS prompts for Accessibility (browser automation) and System Events (window minimize via AppleScript). Allow both — one-time approvals. The setup wizard warns you before this step. |
 
 > **Max tier note:** Claude Opus 4.6 requires a Perplexity Max subscription. Set `subscription_tier: max` in your config to enable it. The model selector has been tested with Pro tier — Max users may encounter UI differences. Please [report issues](https://github.com/i-dedova/perplexity-research-plugin/issues).
 
@@ -109,9 +111,9 @@ The wizard is smart: it runs a preflight check, identifies what's broken or miss
 
 | Path | Trigger | What happens |
 |------|---------|--------------|
-| **Skill** (automatic) | Claude recognizes research need from keywords | Interactive scope discussion → agent(s) |
-| **Command** | User runs `/perplexity-research [topic]` | Same skill flow — scope discussion → agent(s) |
-| **Direct spawn** | Claude determines scope is already clear | Spawns `research-agent` immediately |
+| **User invocation** | `/perplexity-research [topic]` | Interactive scope discussion → agent(s) |
+| **Automatic** | Claude recognizes research need from keywords | Same skill flow — scope discussion → agent(s) |
+| **Direct spawn** | Claude determines scope is already clear | Spawns `research-agent` with search mode (default) |
 
 Up to 10 concurrent agents (sessions 0-9) for parallel research on independent topics.
 
@@ -132,7 +134,7 @@ The plugin creates a `.claude/perplexity/` directory for all persistent state:
 | Tracked dirs | `.claude/perplexity/tracked-dirs.json` | Registry of project directories using the plugin |
 | Logs | `.claude/perplexity/logs/` | Hook, research, and cleanup logs (auto-cleaned) |
 | Research output | `.playwright-cli/` (in project CWD) | Downloads, session state, temp files |
-| Final output | `{project}/docs/research/` | Processed research documents |
+| Final output | Configured during setup (default: `docs/research/`) | Processed research documents |
 
 ## Configuration
 
@@ -146,6 +148,7 @@ log_retention_days: 7      # 1-30 days
 default_model: dynamic     # dynamic, best, or model slug
 default_thinking: dynamic  # dynamic, true, false
 subscription_tier: pro     # pro or max
+output_dir: docs/research  # relative folder for research outputs
 ---
 ```
 
@@ -166,17 +169,11 @@ subscription_tier: pro     # pro or max
 
 If the config file is deleted, run `/perplexity-setup` to recreate it with your previous settings (or defaults).
 
-### Deep Research
-
-Deep mode triggers Perplexity's multi-step research pipeline — it runs autonomously, exploring sources and building a comprehensive answer. Use it thoughtfully: deep mode accepts a **single prompt only** (no follow-ups, no synthesize). Plan your question carefully to include all aspects you need covered. Workflow: start → download → close.
-
-For iterative research with follow-ups, use **search mode** instead.
-
 ## Architecture
 
 ```
 bin/
-└── ppx-research.js              # Unified CLI entry point (npm link)
+└── ppx-research.js              # Unified CLI entry point
 
 scripts/
 ├── lib/                         # Shared modules
@@ -205,28 +202,25 @@ agents/
 └── research-agent.md            # Autonomous research execution agent
 
 skills/
-└── perplexity-research/
-    ├── SKILL.md                 # Scope discussion skill
-    └── references/
-        └── model-selection.md   # Model decision guide
-
-commands/
-├── perplexity-research.md       # /perplexity-research command
-└── perplexity-setup.md          # /perplexity-setup wizard
+├── perplexity-research/
+│   ├── SKILL.md                 # Scope discussion skill (user-invocable)
+│   └── references/
+│       └── model-selection.md   # Model decision guide
+└── perplexity-setup/
+    └── SKILL.md                 # Setup wizard skill (user-invocable)
 ```
 
 ## Components
 
 | Component | Purpose |
 |-----------|---------|
-| **Skill**: `perplexity-research` | Scope discussion → agent handoff → output |
-| **Command**: `/perplexity-research` | User-invocable entry point |
-| **Command**: `/perplexity-setup` | Interactive setup and healing wizard |
+| **Skill**: `perplexity-research` | Scope discussion → agent handoff → output (user-invocable) |
+| **Skill**: `perplexity-setup` | Interactive setup and healing wizard (user-invocable) |
 | **Agent**: `research-agent` | Autonomous research execution |
 
 ## CLI Commands
 
-All commands use the unified `ppx-research` alias (installed via `npm link` during setup):
+All commands use the unified `ppx-research` alias (installed via setup wizard):
 
 ### Research
 
@@ -260,6 +254,7 @@ ppx-research setup <command>
 | `set-model <value>` | Set default model (dynamic/best/slug) |
 | `set-thinking <value>` | Set default thinking (dynamic/true/false) |
 | `set-tier <value>` | Set subscription tier (pro/max) |
+| `set-output-dir <path>` | Set research output directory (relative to project) |
 | `clone-pool` | Clone master to sessions 0-9 |
 | `check-session <N>` | Validate session cookie |
 | `scan-sessions` | Scan all sessions |
@@ -283,9 +278,7 @@ ppx-research cleanup [options]
 | Mode | Description | Use Case |
 |------|-------------|----------|
 | **search** | Standard research with follow-ups and synthesis | Most queries — focused questions, comparisons, practical advice |
-| **deep** | Perplexity's autonomous multi-step pipeline | Complex topics needing comprehensive, multi-source analysis. Single prompt — plan carefully |
-
-**Search mode** is for iterative research: focused questions, comparisons, follow-ups, and synthesis across multiple turns. **Deep mode** is for comprehensive one-shot analysis — craft a detailed prompt that covers all aspects upfront, as there are no follow-ups.
+| **deep** | Perplexity's autonomous multi-step pipeline | Complex topics needing comprehensive, multi-source analysis. Single prompt only — no follow-ups, 5-10 minutes. Plan your question to cover all aspects upfront |
 
 ## Manual Setup
 
@@ -295,7 +288,8 @@ Skip if you used `/perplexity-setup`.
 
 ```bash
 npm install -g @playwright/cli@latest
-npm link --prefix ~/.claude/plugins/perplexity-research
+bash ~/.claude/plugins/perplexity-research/scripts/install-alias.sh
+export PATH="$HOME/.claude/bin:$PATH"
 ```
 
 ### 2. Create Master Session

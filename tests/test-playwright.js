@@ -210,6 +210,57 @@ async function run() {
       const isOpen = new RegExp(`${CI_SESSION}[\\s\\S]*?status:\\s*open`).test(output);
       assert(!isOpen, `Session ${CI_SESSION} should not be open after close`);
     });
+
+    // macOS has a GUI desktop on GitHub Actions — validate --headed --persistent
+    // matches the actual setup flow (the flags users run during /perplexity-setup)
+    if (require('os').platform() === 'darwin') {
+      const CI_HEADED_SESSION = 'ci-headed-test';
+
+      function ciHeadedCli(args, opts = {}) {
+        const jsPath = getPlaywrightCliPath();
+        const fullArgs = [`-s=${CI_HEADED_SESSION}`, ...args];
+        if (jsPath) {
+          return ciExecFileSync(process.execPath, [jsPath, ...fullArgs], {
+            encoding: 'utf8', timeout: opts.timeout || 15000,
+            windowsHide: true, stdio: ['pipe', 'pipe', 'pipe']
+          });
+        }
+        return ciExecFileSync('playwright-cli', fullArgs, {
+          encoding: 'utf8', timeout: opts.timeout || 15000,
+          windowsHide: true, stdio: ['pipe', 'pipe', 'pipe']
+        });
+      }
+
+      test('open headed+persistent session on macOS (example.com)', () => {
+        try {
+          const output = ciHeadedCli(['open', 'https://example.com', '--persistent', '--headed', '--browser', 'chromium'], { timeout: 25000 });
+          logVerbose(`headed open output: ${output.substring(0, 200)}`);
+        } catch (e) {
+          logVerbose(`headed open stderr: ${e.stderr?.substring(0, 200)}`);
+        }
+        syncSleep(5000);
+      });
+
+      test('headed session appears in list', () => {
+        const output = ciHeadedCli(['list']);
+        logVerbose(`headed list output: ${output.substring(0, 300)}`);
+        assert(output.includes(CI_HEADED_SESSION), `Session ${CI_HEADED_SESSION} should appear in list`);
+      });
+
+      test('close headed session', () => {
+        try {
+          ciHeadedCli(['close'], { timeout: 10000 });
+        } catch {
+          // may already be closed
+        }
+      });
+
+      test('headed session closed after close command', () => {
+        const output = ciHeadedCli(['list']);
+        const isOpen = new RegExp(`${CI_HEADED_SESSION}[\\s\\S]*?status:\\s*open`).test(output);
+        assert(!isOpen, `Session ${CI_HEADED_SESSION} should not be open after close`);
+      });
+    }
   }
 }
 

@@ -73,6 +73,7 @@ function getSetupStatus() {
       defaultModel: cfg.defaultModel,
       defaultThinking: cfg.defaultThinking,
       subscriptionTier: cfg.subscriptionTier,
+      outputDir: cfg.outputDir,
       file: PATHS.configFile
     },
     sessions: {
@@ -104,6 +105,10 @@ function getSetupStatus() {
   if (!cfg.cleanupDays) {
     status.missing.push('cleanup_days');
     status.nextSteps.push('configure-cleanup');
+  }
+  if (!cfg.outputDir) {
+    status.missing.push('output_dir');
+    status.nextSteps.push('configure-output-dir');
   }
   if (!poolCheck.masterExists || masterExpired) {
     status.missing.push('master-session');
@@ -167,6 +172,7 @@ function cmdCheck() {
   console.log(`○ Default model: ${status.config.defaultModel || `not set (default: ${DEFAULTS.defaultModel})`}`);
   console.log(`○ Default thinking: ${status.config.defaultThinking || `not set (default: ${DEFAULTS.defaultThinking})`}`);
   console.log(`○ Subscription tier: ${status.config.subscriptionTier || `not set (default: ${DEFAULTS.subscriptionTier})`}`);
+  console.log(`○ Output directory: ${status.config.outputDir || `not set (default: ${DEFAULTS.outputDir})`}`);
 
   // Sessions
   const browser = status.config.browser || DEFAULTS.browser;
@@ -180,7 +186,7 @@ function cmdCheck() {
       console.log('✗ Master session: EXPIRED (re-login required)');
     } else {
       console.log('✗ Master session: NOT FOUND');
-      console.log(`  Create with: PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli open https://perplexity.ai --browser ${browser} --headed`);
+      console.log(`  Create with: PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli open https://perplexity.ai --persistent --headed --browser ${browser}`);
     }
 
     if (status.sessions.poolCount > 0) {
@@ -263,6 +269,16 @@ function cmdSetTier(tier) {
   console.log(`Config file: ${result.configFile}`);
 }
 
+function cmdSetOutputDir(dir) {
+  if (!dir) {
+    console.error('Usage: ppx-research setup set-output-dir <folder-name>');
+    process.exit(1);
+  }
+  const result = config.setOutputDir(dir);
+  console.log(`Output directory saved: ${result.outputDir}`);
+  console.log(`Config file: ${result.configFile}`);
+}
+
 async function cmdClonePool(args) {
   const count = args.count ? parseInt(args.count, 10) : 10;
   const browser = args.browser || config.getBrowser();
@@ -274,7 +290,7 @@ async function cmdClonePool(args) {
 
   const sessionDir = platform.getPlaywrightSessionDir();
   if (!sessionDir) {
-    throw new Error('Playwright session directory not found. Run "playwright-cli open" at least once.');
+    throw new Error('Playwright session directory not found. Run "PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli open https://perplexity.ai --persistent --headed" at least once.');
   }
 
   const masterPath = sessionStatus.getMasterSessionPath(browser);
@@ -434,6 +450,7 @@ Commands:
   set-model <value>      Set default model (dynamic, best, or model slug)
   set-thinking <value>   Set default thinking (dynamic, true, false)
   set-tier <value>       Set subscription tier (pro, max)
+  set-output-dir <path>  Set research output directory (relative to project)
   clone-pool             Clone master to pool (0-9)
   check-session <N>      Check session cookie (0-9)
   scan-sessions          Scan all sessions
@@ -458,6 +475,7 @@ async function main() {
       case 'set-model': cmdSetModel(value); break;
       case 'set-thinking': cmdSetThinking(value); break;
       case 'set-tier': cmdSetTier(value); break;
+      case 'set-output-dir': cmdSetOutputDir(value); break;
       case 'clone-pool': await cmdClonePool(args); break;
       case 'check-session': await cmdCheckSession(value); break;
       case 'scan-sessions': await cmdScanSessions(args); break;

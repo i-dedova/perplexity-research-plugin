@@ -226,6 +226,99 @@ function run() {
     assert('subscriptionTier' in cfg, 'Should have subscriptionTier');
   });
 
+  // === Output Directory ===
+  log('\n=== Output Directory ===');
+
+  test('getOutputDir returns string', () => {
+    const dir = config.getOutputDir();
+    assertType(dir, 'string', 'Output directory');
+  });
+
+  test('getOutputDir returns default when not configured', () => {
+    const dir = config.getOutputDir();
+    assertEqual(dir, DEFAULTS.outputDir, 'Should return default');
+  });
+
+  test('getConfig includes outputDir field', () => {
+    const cfg = config.getConfig();
+    assert('outputDir' in cfg, 'Should have outputDir');
+  });
+
+  test('setOutputDir validates non-empty', () => {
+    assertThrows(
+      () => config.setOutputDir(''),
+      'non-empty',
+      'setOutputDir with empty string'
+    );
+  });
+
+  test('setOutputDir rejects absolute paths (Unix)', () => {
+    assertThrows(
+      () => config.setOutputDir('/tmp/research'),
+      'absolute path',
+      'setOutputDir with absolute Unix path'
+    );
+  });
+
+  test('setOutputDir rejects absolute paths (home)', () => {
+    assertThrows(
+      () => config.setOutputDir('~/research'),
+      'absolute path',
+      'setOutputDir with tilde path'
+    );
+  });
+
+  test('setOutputDir rejects absolute paths (Windows)', () => {
+    assertThrows(
+      () => config.setOutputDir('C:\\research'),
+      'absolute path',
+      'setOutputDir with Windows drive path'
+    );
+  });
+
+  test('setOutputDir rejects directory traversal', () => {
+    assertThrows(
+      () => config.setOutputDir('../outside'),
+      'directory traversal',
+      'setOutputDir with ..'
+    );
+  });
+
+  test('setOutputDir accepts nested paths', () => {
+    const { renameSync, existsSync: ex } = require('fs');
+    const configFile = PATHS.configFile;
+    const backupFile = configFile + '.outputdir-backup';
+    const hadConfig = ex(configFile);
+    if (hadConfig) renameSync(configFile, backupFile);
+
+    try {
+      const result = config.setOutputDir('docs/research/perplexity');
+      assertEqual(result.outputDir, 'docs/research/perplexity', 'Nested path should be accepted');
+
+      const cfg = config.getConfig();
+      assertEqual(cfg.outputDir, 'docs/research/perplexity', 'Roundtrip: outputDir nested');
+    } finally {
+      if (hadConfig) renameSync(backupFile, configFile);
+      else try { require('fs').unlinkSync(configFile); } catch {}
+    }
+  });
+
+  test('setOutputDir trims whitespace and trailing slashes', () => {
+    const { renameSync, existsSync: ex } = require('fs');
+    const configFile = PATHS.configFile;
+    const backupFile = configFile + '.outputdir-trim-backup';
+    const hadConfig = ex(configFile);
+    if (hadConfig) renameSync(configFile, backupFile);
+
+    try {
+      const result = config.setOutputDir('  research/output/  ');
+      assertEqual(result.outputDir, 'research/output', 'Should trim whitespace and trailing slash');
+    } finally {
+      if (hadConfig) renameSync(backupFile, configFile);
+      else try { require('fs').unlinkSync(configFile); } catch {}
+    }
+  });
+
   // === Config CRLF Handling ===
   log('\n=== Config CRLF Handling ===');
 
@@ -277,6 +370,7 @@ function run() {
       config.setCleanupDays(3);
       config.setDefaultModel('best');
       config.setSubscriptionTier('max');
+      config.setOutputDir('my-research');
 
       // Read back
       const cfg = config.getConfig();
@@ -284,6 +378,7 @@ function run() {
       assertEqual(cfg.cleanupDays, 3, 'Roundtrip: cleanupDays');
       assertEqual(cfg.defaultModel, 'best', 'Roundtrip: defaultModel');
       assertEqual(cfg.subscriptionTier, 'max', 'Roundtrip: subscriptionTier');
+      assertEqual(cfg.outputDir, 'my-research', 'Roundtrip: outputDir');
       assertEqual(cfg.exists, true, 'Roundtrip: config should exist');
     } finally {
       if (hadConfig) {
@@ -318,6 +413,7 @@ function run() {
       assertEqual(json.config.defaultModel, null, 'defaultModel must be null (not "dynamic")');
       assertEqual(json.config.defaultThinking, null, 'defaultThinking must be null (not "dynamic")');
       assertEqual(json.config.subscriptionTier, null, 'subscriptionTier must be null (not "pro")');
+      assertEqual(json.config.outputDir, null, 'outputDir must be null (not "docs/research")');
       assertEqual(json.config.exists, false, 'config.exists must be false');
     } finally {
       if (hadConfig) {

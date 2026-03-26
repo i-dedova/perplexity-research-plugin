@@ -39,6 +39,7 @@ const RESEARCH_CONFIG = {
   },
   timeout: {
     search: 120000,
+    searchExtended: 300000,  // search with thinking or auto-routed model
     deep: 600000
   },
   pollInterval: 3000,
@@ -467,7 +468,13 @@ async function cmdStart(args) {
   submitQuery(sessionId, fullPrompt);
   platform.minimizeWindows('Perplexity');
 
-  await waitForResponse(sessionId, countBefore, RESEARCH_CONFIG.timeout[mode]);
+  // Use extended timeout for search with thinking or auto-routed model
+  const needsExtendedTimeout = mode === 'search' && (resolvedThinking === 'true' || resolvedModel === 'best');
+  const timeoutKey = mode === 'deep' ? 'deep' : (needsExtendedTimeout ? 'searchExtended' : 'search');
+  const timeoutMs = RESEARCH_CONFIG.timeout[timeoutKey];
+  log.info(`start: using timeout=${timeoutMs}ms (${timeoutKey})`);
+
+  await waitForResponse(sessionId, countBefore, timeoutMs);
   const text = readResponseText(sessionId);
   if (!text) throw new Error('Failed to read response from page');
   log.info(`start: completed in ${Date.now() - startTime}ms, response=${text.length}chars`);
