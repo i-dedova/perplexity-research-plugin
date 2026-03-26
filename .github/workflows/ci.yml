@@ -40,27 +40,19 @@ jobs:
             ~/.cache/ms-playwright
             ~/Library/Caches/ms-playwright
             ~/AppData/Local/ms-playwright
-          key: playwright-browsers-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+          key: pw-browsers-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
 
-      - name: Cache global npm packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            ~/AppData/Roaming/npm
-            ~/AppData/Roaming/npm-cache
-          key: npm-global-${{ runner.os }}-node${{ matrix.node-version }}-${{ steps.pw-version.outputs.version }}
-
-      - name: Install playwright-cli
-        run: npm install -g @playwright/cli@latest
+      - name: Install playwright-cli and playwright
+        shell: bash
+        run: npm install -g @playwright/cli@latest playwright@latest
 
       - name: Install Chromium browser
         if: steps.cache-browsers.outputs.cache-hit != 'true'
-        run: npx playwright install chromium
+        run: playwright install chromium
 
       - name: Install OS dependencies for Chromium
         if: runner.os == 'Linux'
-        run: npx playwright install-deps chromium
+        run: playwright install-deps chromium
 
       - name: Install alias
         shell: bash
