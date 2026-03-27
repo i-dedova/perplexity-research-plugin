@@ -63,6 +63,10 @@
     "2026-03-24": {
       "count": 1,
       "uniques": 1
+    },
+    "2026-03-25": {
+      "count": 11,
+      "uniques": 4
     }
   },
   "views": {
@@ -129,6 +133,10 @@
     "2026-03-24": {
       "count": 18,
       "uniques": 3
+    },
+    "2026-03-25": {
+      "count": 4,
+      "uniques": 2
     }
   },
   "referrers": {
@@ -158,6 +166,23 @@
       {
         "referrer": "github.com",
         "count": 39,
+        "uniques": 3
+      },
+      {
+        "referrer": "com.linkedin.android",
+        "count": 7,
+        "uniques": 4
+      }
+    ],
+    "2026-03-12..2026-03-25": [
+      {
+        "referrer": "linkedin.com",
+        "count": 59,
+        "uniques": 29
+      },
+      {
+        "referrer": "github.com",
+        "count": 42,
         "uniques": 3
       },
       {
@@ -234,6 +259,58 @@
       {
         "path": "/i-dedova/perplexity-research-plugin/pulse",
         "count": 6,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master",
+        "count": 6,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.claude-plugin",
+        "count": 3,
+        "uniques": 3
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/skills/perplexity-research",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/bin/ppx-research.js",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/skills/perplexity-research/SKILL.md",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/bin",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/branches",
+        "count": 2,
+        "uniques": 1
+      }
+    ],
+    "2026-03-12..2026-03-25": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 77,
+        "uniques": 39
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 16,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulse",
+        "count": 7,
         "uniques": 2
       },
       {
