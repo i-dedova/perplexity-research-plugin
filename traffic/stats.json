@@ -67,6 +67,14 @@
     "2026-03-25": {
       "count": 11,
       "uniques": 4
+    },
+    "2026-03-26": {
+      "count": 68,
+      "uniques": 16
+    },
+    "2026-03-27": {
+      "count": 19,
+      "uniques": 9
     }
   },
   "views": {
@@ -137,6 +145,14 @@
     "2026-03-25": {
       "count": 4,
       "uniques": 2
+    },
+    "2026-03-26": {
+      "count": 32,
+      "uniques": 2
+    },
+    "2026-03-27": {
+      "count": 9,
+      "uniques": 2
     }
   },
   "referrers": {
@@ -184,6 +200,23 @@
         "referrer": "github.com",
         "count": 42,
         "uniques": 3
+      },
+      {
+        "referrer": "com.linkedin.android",
+        "count": 7,
+        "uniques": 4
+      }
+    ],
+    "2026-03-14..2026-03-27": [
+      {
+        "referrer": "github.com",
+        "count": 67,
+        "uniques": 5
+      },
+      {
+        "referrer": "linkedin.com",
+        "count": 59,
+        "uniques": 29
       },
       {
         "referrer": "com.linkedin.android",
@@ -347,6 +380,58 @@
         "path": "/i-dedova/perplexity-research-plugin/branches",
         "count": 2,
         "uniques": 1
+      }
+    ],
+    "2026-03-14..2026-03-27": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 84,
+        "uniques": 41
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 21,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulse",
+        "count": 10,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master",
+        "count": 7,
+        "uniques": 3
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/workflows/ci.yml",
+        "count": 6,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.claude-plugin",
+        "count": 4,
+        "uniques": 4
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/runs/23610580399/job/68764901684",
+        "count": 4,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/README.md",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/skills/perplexity-research",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/bin/ppx-research.js",
+        "count": 2,
+        "uniques": 2
       }
     ]
   }
