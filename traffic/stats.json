@@ -83,6 +83,14 @@
     "2026-03-29": {
       "count": 11,
       "uniques": 10
+    },
+    "2026-03-30": {
+      "count": 6,
+      "uniques": 6
+    },
+    "2026-03-31": {
+      "count": 4,
+      "uniques": 4
     }
   },
   "views": {
@@ -169,6 +177,14 @@
     "2026-03-29": {
       "count": 24,
       "uniques": 2
+    },
+    "2026-03-30": {
+      "count": 5,
+      "uniques": 2
+    },
+    "2026-03-31": {
+      "count": 2,
+      "uniques": 1
     }
   },
   "referrers": {
@@ -261,6 +277,23 @@
       {
         "referrer": "github.com",
         "count": 75,
+        "uniques": 5
+      },
+      {
+        "referrer": "linkedin.com",
+        "count": 59,
+        "uniques": 29
+      },
+      {
+        "referrer": "com.linkedin.android",
+        "count": 7,
+        "uniques": 4
+      }
+    ],
+    "2026-03-18..2026-03-31": [
+      {
+        "referrer": "github.com",
+        "count": 82,
         "uniques": 5
       },
       {
@@ -545,6 +578,58 @@
       {
         "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
         "count": 23,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulse",
+        "count": 11,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/workflows/ci.yml",
+        "count": 8,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master",
+        "count": 7,
+        "uniques": 3
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.claude-plugin",
+        "count": 4,
+        "uniques": 4
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/runs/23610580399/job/68764901684",
+        "count": 4,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/.gitignore",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/README.md",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/branches",
+        "count": 3,
+        "uniques": 2
+      }
+    ],
+    "2026-03-18..2026-03-31": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 90,
+        "uniques": 41
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 29,
         "uniques": 1
       },
       {
