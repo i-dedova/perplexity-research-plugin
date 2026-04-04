@@ -99,6 +99,10 @@
     "2026-04-02": {
       "count": 3,
       "uniques": 3
+    },
+    "2026-04-03": {
+      "count": 14,
+      "uniques": 7
     }
   },
   "views": {
@@ -200,6 +204,10 @@
     },
     "2026-04-02": {
       "count": 9,
+      "uniques": 1
+    },
+    "2026-04-03": {
+      "count": 3,
       "uniques": 1
     }
   },
@@ -333,6 +341,23 @@
         "referrer": "linkedin.com",
         "count": 24,
         "uniques": 11
+      },
+      {
+        "referrer": "com.linkedin.android",
+        "count": 3,
+        "uniques": 2
+      }
+    ],
+    "2026-03-21..2026-04-03": [
+      {
+        "referrer": "github.com",
+        "count": 92,
+        "uniques": 4
+      },
+      {
+        "referrer": "linkedin.com",
+        "count": 7,
+        "uniques": 5
       },
       {
         "referrer": "com.linkedin.android",
@@ -756,6 +781,58 @@
         "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
         "count": 2,
         "uniques": 2
+      }
+    ],
+    "2026-03-21..2026-04-03": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 41,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 35,
+        "uniques": 12
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulse",
+        "count": 13,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/workflows/ci.yml",
+        "count": 8,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/runs/23610580399/job/68764901684",
+        "count": 4,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/runs/23611416098",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/workflows/traffic-snapshot.yml",
+        "count": 2,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/.gitignore",
+        "count": 2,
+        "uniques": 1
       }
     ]
   }
