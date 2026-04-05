@@ -249,36 +249,45 @@ async function run() {
       });
     }
 
-    test('open browser session (headless, example.com)', () => {
-      try {
-        const output = ciCli(['open', 'https://example.com', '--persistent', '--browser', 'chromium'], { timeout: 20000 });
-        logVerbose(`open output: ${output.substring(0, 200)}`);
-      } catch (e) {
-        logVerbose(`open stderr: ${(e.stderr || '').replace(/#< CLIXML[\s\S]*?<\/Objs>/g, '').trim().substring(0, 200)}`);
-      }
-      syncSleep(3000);
-    });
+    // Open session and poll until it appears in list.
+    // CLI 0.1.5+ registers sessions asynchronously — fixed sleep is insufficient.
+    let ciSessionReady = false;
 
-    test('list shows CI session', () => {
-      const output = ciCli(['list']);
-      logVerbose(`list output: ${output.substring(0, 300)}`);
-      assert(output.includes(CI_SESSION), `Session ${CI_SESSION} should appear in list`);
+    test('open browser session and verify registration', () => {
+      // Open — must NOT swallow errors
+      const output = ciCli(['open', 'https://example.com', '--persistent', '--browser', 'chromium'], { timeout: 20000 });
+      logVerbose(`open output: ${output.substring(0, 200)}`);
+
+      // Poll until session appears in list (up to 15s)
+      const start = Date.now();
+      while (Date.now() - start < 15000) {
+        try {
+          const list = ciCli(['list']);
+          if (list.includes(CI_SESSION)) {
+            ciSessionReady = true;
+            logVerbose(`session registered after ${Date.now() - start}ms`);
+            break;
+          }
+        } catch {}
+        syncSleep(2000);
+      }
+      assert(ciSessionReady, `Session ${CI_SESSION} should appear in list within 15s`);
     });
 
     // Tab management — tests the phantom tab fix (no extra sleeps, pure CLI calls)
     test('run-code returns tab count of 1 for fresh session', () => {
+      if (!ciSessionReady) return;
       const result = ciCli(['run-code', 'async page => page.context().pages().length']);
       logVerbose(`tab count result: ${result.substring(0, 100)}`);
       assert(result.includes('1'), `Fresh session should have 1 tab, got: ${result.trim()}`);
     });
 
     test('tab-new + tab-close lifecycle', () => {
-      // Create a phantom tab
+      if (!ciSessionReady) return;
       ciCli(['tab-new']);
       const after = ciCli(['run-code', 'async page => page.context().pages().length']);
       logVerbose(`after tab-new: ${after.substring(0, 100)}`);
 
-      // Close phantom tab and return to tab 0
       ciCli(['tab-close', '1']);
       ciCli(['tab-select', '0']);
       const final = ciCli(['run-code', 'async page => page.context().pages().length']);
@@ -320,20 +329,21 @@ async function run() {
         });
       }
 
-      test('open headed+persistent session on macOS (example.com)', () => {
-        try {
-          const output = ciHeadedCli(['open', 'https://example.com', '--persistent', '--headed', '--browser', 'chromium'], { timeout: 25000 });
-          logVerbose(`headed open output: ${output.substring(0, 200)}`);
-        } catch (e) {
-          logVerbose(`headed open stderr: ${(e.stderr || '').replace(/#< CLIXML[\s\S]*?<\/Objs>/g, '').trim().substring(0, 200)}`);
-        }
-        syncSleep(5000);
-      });
+      test('open headed+persistent session on macOS and verify registration', () => {
+        const output = ciHeadedCli(['open', 'https://example.com', '--persistent', '--headed', '--browser', 'chromium'], { timeout: 25000 });
+        logVerbose(`headed open output: ${output.substring(0, 200)}`);
 
-      test('headed session appears in list', () => {
-        const output = ciHeadedCli(['list']);
-        logVerbose(`headed list output: ${output.substring(0, 300)}`);
-        assert(output.includes(CI_HEADED_SESSION), `Session ${CI_HEADED_SESSION} should appear in list`);
+        // Poll until session appears (up to 15s)
+        const start = Date.now();
+        let found = false;
+        while (Date.now() - start < 15000) {
+          try {
+            const list = ciHeadedCli(['list']);
+            if (list.includes(CI_HEADED_SESSION)) { found = true; break; }
+          } catch {}
+          syncSleep(2000);
+        }
+        assert(found, `Session ${CI_HEADED_SESSION} should appear in list within 15s`);
       });
 
       test('close headed session', () => {
