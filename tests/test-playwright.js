@@ -254,8 +254,13 @@ async function run() {
     let ciSessionReady = false;
 
     test('open browser session and verify registration', () => {
-      // Open — must NOT swallow errors
-      const output = ciCli(['open', 'https://example.com', '--persistent', '--browser', 'chrome'], { timeout: 20000 });
+      // CLI 0.1.5+ uses 'chrome', older uses 'chromium' — try chrome first, fall back
+      let output;
+      try {
+        output = ciCli(['open', 'https://example.com', '--persistent', '--browser', 'chrome'], { timeout: 20000 });
+      } catch {
+        output = ciCli(['open', 'https://example.com', '--persistent', '--browser', 'chromium'], { timeout: 20000 });
+      }
       logVerbose(`open output: ${output.substring(0, 200)}`);
 
       // Poll until session appears in list (up to 15s)
@@ -330,7 +335,12 @@ async function run() {
       }
 
       test('open headed+persistent session on macOS and verify registration', () => {
-        const output = ciHeadedCli(['open', 'https://example.com', '--persistent', '--headed', '--browser', 'chrome'], { timeout: 25000 });
+        let output;
+        try {
+          output = ciHeadedCli(['open', 'https://example.com', '--persistent', '--headed', '--browser', 'chrome'], { timeout: 25000 });
+        } catch {
+          output = ciHeadedCli(['open', 'https://example.com', '--persistent', '--headed', '--browser', 'chromium'], { timeout: 25000 });
+        }
         logVerbose(`headed open output: ${output.substring(0, 200)}`);
 
         // Poll until session appears (up to 15s)

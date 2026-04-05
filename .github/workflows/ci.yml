@@ -51,17 +51,19 @@ jobs:
         if: steps.cache-browsers.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          # Use playwright-cli's own installer — gets the right browser for each CLI version
-          # (0.1.1 uses chromium, 0.1.5+ uses chrome-for-testing)
-          playwright-cli install-browser --only-shell
-          # Also install via playwright for OS deps
-          npm install -g playwright@latest
-          playwright install chromium
+          # CLI 0.1.5+ has install-browser; older versions use playwright install
+          if playwright-cli install-browser --dry-run > /dev/null 2>&1; then
+            playwright-cli install-browser --only-shell
+          else
+            npm install -g playwright@latest
+            playwright install chromium
+          fi
 
       - name: Install OS dependencies for Chromium
         if: runner.os == 'Linux'
         shell: bash
         run: |
+          # Ensure playwright is available for install-deps
           npm list -g playwright > /dev/null 2>&1 || npm install -g playwright@latest
           playwright install-deps chromium
 
