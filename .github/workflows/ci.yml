@@ -16,9 +16,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: [18, 22]
+        cli-version: ['latest']
+        include:
+          # Test minimum supported CLI version on one OS to keep CI fast
+          - os: ubuntu-latest
+            node-version: 22
+            cli-version: '0.1.1'
 
     runs-on: ${{ matrix.os }}
-    name: ${{ matrix.os }} / Node ${{ matrix.node-version }}
+    name: ${{ matrix.os }} / Node ${{ matrix.node-version }} / CLI ${{ matrix.cli-version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +50,7 @@ jobs:
 
       - name: Install playwright-cli and playwright
         shell: bash
-        run: npm install -g @playwright/cli@latest playwright@latest
+        run: npm install -g @playwright/cli@${{ matrix.cli-version }} playwright@latest
 
       - name: Install Chromium browser
         if: steps.cache-browsers.outputs.cache-hit != 'true'

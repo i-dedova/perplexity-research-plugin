@@ -51,7 +51,24 @@ function parseArgs(argv, options = {}) {
  */
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+/**
+ * Compare semver strings numerically (handles 0.1.10 > 0.1.2 correctly).
+ * @param {string} version - Version to check
+ * @param {string} minimum - Minimum required version
+ * @returns {boolean} True if version >= minimum
+ */
+function meetsMinVersion(version, minimum) {
+  const v = version.split('.').map(Number);
+  const m = minimum.split('.').map(Number);
+  for (let i = 0; i < Math.max(v.length, m.length); i++) {
+    if ((v[i] || 0) > (m[i] || 0)) return true;
+    if ((v[i] || 0) < (m[i] || 0)) return false;
+  }
+  return true; // equal
+}
+
 module.exports = {
   parseArgs,
-  sleep
+  sleep,
+  meetsMinVersion
 };

@@ -9,14 +9,15 @@
 
 const { existsSync } = require('fs');
 const { getBrowser, PATHS } = require('./config');
-const { minimizeWindows } = require('./platform');
-const { runCode, startSession, stopSession, isSessionRunning } = require('./playwright');
+const { minimizeWindows, clearSessionRestore } = require('./platform');
+const { runCode, startSession, stopSession, isSessionRunning, tabSelect, tabClose, getTabCount } = require('./playwright');
 const {
   getSessionStatus,
   saveSessionStatus,
   isSessionExpired,
   findValidDonorSession,
   getMasterSessionPath,
+  getSessionPath,
   copySessionFrom,
   copySessionFromMaster
 } = require('./session-status');
@@ -36,13 +37,39 @@ async function checkSessionCookie(sessionId, browser, options = {}) {
   const keepOpen = options.keepOpen || false;
   const wasRunning = isSessionRunning(sessionId);
 
+  // Track phantom tabs closed (used in return value)
+  let phantomTabsClosed = 0;
+
   // Start session if not running
   if (!wasRunning) {
+    // Clear session restore files BEFORE launch — prevents Edge/Chrome from
+    // restoring previous tabs (ghost about:blank tabs). Cookies are untouched.
+    const userDataDir = getSessionPath(sessionId, browserName);
+    clearSessionRestore(userDataDir);
+
     startSession(sessionId, browserName);
     await sleep(6000);  // Wait for browser to start
+
     // Navigate to Perplexity (config doesn't auto-navigate for existing sessions)
     runCode(sessionId, 'async page => await page.goto("https://perplexity.ai", { waitUntil: "domcontentloaded", timeout: 15000 })', 20000);
     await sleep(1000);
+
+    // Close any non-Perplexity tabs (Edge opens ntp.msn.com, Chrome opens new tab page).
+    // Collect targets first, then close — avoids mutating the pages array during iteration.
+    const closeResult = runCode(sessionId, `async page => {
+      const pages = page.context().pages();
+      const toClose = pages.filter(p => !p.url().includes('perplexity'));
+      if (toClose.length >= pages.length) return 0;
+      for (const p of toClose) await p.close();
+      return toClose.length;
+    }`.replace(/\n/g, ' '));
+    if (closeResult) {
+      const closedMatch = closeResult.match(/### Result\s*\n(\d+)/);
+      if (closedMatch && parseInt(closedMatch[1], 10) > 0) {
+        phantomTabsClosed = parseInt(closedMatch[1], 10);
+      }
+    }
+
     minimizeWindows('Perplexity');
   }
 
@@ -80,7 +107,8 @@ async function checkSessionCookie(sessionId, browser, options = {}) {
     isPro: hasPro,
     expires,
     isExpired: isSessionExpired(expires),
-    sessionStarted: !wasRunning
+    sessionStarted: !wasRunning,
+    phantomTabsClosed
   };
 }
 
@@ -88,9 +116,11 @@ async function checkSessionCookie(sessionId, browser, options = {}) {
  * Refresh an expired session from a valid donor or master
  * @param {number|string} targetSessionId
  * @param {string} [browser]
+ * @param {object} [options]
+ * @param {function} [options.log] - Log callback (default: no-op). Callers pass console.log for terminal output.
  * @returns {Promise<object>}
  */
-async function refreshSession(targetSessionId, browser) {
+async function refreshSession(targetSessionId, browser, { log = () => {} } = {}) {
   const browserName = browser || getBrowser();
   const status = getSessionStatus();
 
@@ -103,17 +133,17 @@ async function refreshSession(targetSessionId, browser) {
       throw new Error('No valid donor sessions found. All sessions expired. Please re-login.');
     }
 
-    console.log('Using master session (perplexity-pro) as donor');
+    log('Using master session (perplexity-pro) as donor');
     copySessionFromMaster(targetSessionId, browserName);
     return { refreshedFrom: 'master' };
   }
 
-  console.log(`Refreshing session ${targetSessionId} from donor session ${donorId}...`);
+  log(`Refreshing session ${targetSessionId} from donor session ${donorId}...`);
   stopSession(targetSessionId);
   await sleep(500);
 
   copySessionFrom(targetSessionId, donorId, browserName);
-  console.log(`Session ${targetSessionId} refreshed from session ${donorId}`);
+  log(`Session ${targetSessionId} refreshed from session ${donorId}`);
   return { refreshedFrom: donorId };
 }
 
@@ -122,9 +152,11 @@ async function refreshSession(targetSessionId, browser) {
  * Leaves session running for agent to use
  * @param {number|string} sessionId
  * @param {string} [browser]
+ * @param {object} [options]
+ * @param {function} [options.log] - Log callback (default: no-op)
  * @returns {Promise<object>}
  */
-async function ensureSessionValid(sessionId, browser) {
+async function ensureSessionValid(sessionId, browser, { log = () => {} } = {}) {
   const browserName = browser || getBrowser();
 
   // Always validate live
@@ -152,7 +184,7 @@ async function ensureSessionValid(sessionId, browser) {
 
   const donorId = findValidDonorSession(status, sessionId);
   if (donorId !== null) {
-    const refreshResult = await refreshSession(sessionId, browserName);
+    const refreshResult = await refreshSession(sessionId, browserName, { log });
 
     // Verify after refresh
     const verifyCheck = await checkSessionCookie(sessionId, browserName, { keepOpen: true });
@@ -181,12 +213,14 @@ async function ensureSessionValid(sessionId, browser) {
 /**
  * Validate master session and save to status
  * @param {string} [browser]
+ * @param {object} [options]
+ * @param {function} [options.log] - Log callback (default: no-op)
  * @returns {Promise<object>}
  */
-async function validateMasterSession(browser) {
+async function validateMasterSession(browser, { log = () => {} } = {}) {
   const browserName = browser || getBrowser();
 
-  console.log('Validating master session (perplexity-pro)...');
+  log('Validating master session (perplexity-pro)...');
   const check = await checkSessionCookie('pro', browserName, { keepOpen: false });
 
   withLockedFile(PATHS.sessionStatusFile, (s) => {
@@ -200,9 +234,9 @@ async function validateMasterSession(browser) {
   });
 
   if (check.loggedIn) {
-    console.log(`✓ Master session valid (expires: ${check.expires})`);
+    log(`✓ Master session valid (expires: ${check.expires})`);
   } else {
-    console.log('✗ Master session NOT logged in');
+    log('✗ Master session NOT logged in');
   }
 
   return check;
@@ -212,9 +246,11 @@ async function validateMasterSession(browser) {
  * Validate each pool session individually and save to status
  * @param {string} [browser]
  * @param {number} [count] - Number of sessions to validate (default: 10)
+ * @param {object} [options]
+ * @param {function} [options.log] - Log callback (default: no-op)
  * @returns {Promise<object>}
  */
-async function validatePoolSessions(browser, sessionIds) {
+async function validatePoolSessions(browser, sessionIds, { log = () => {} } = {}) {
   const browserName = browser || getBrowser();
   // Accept array of IDs or a count (backward compat with cmdClonePool passing a number)
   const ids = Array.isArray(sessionIds)
@@ -222,11 +258,9 @@ async function validatePoolSessions(browser, sessionIds) {
     : Array.from({ length: sessionIds ?? 10 }, (_, i) => i);
   const results = { valid: [], expired: [], notLoggedIn: [] };
 
-  console.log(`\nValidating ${ids.length} pool sessions individually...`);
+  log(`\nValidating ${ids.length} pool sessions individually...`);
 
   for (const i of ids) {
-    process.stdout.write(`  Session ${i}: `);
-
     const check = await checkSessionCookie(i, browserName, { keepOpen: false });
 
     // Save each session's status individually (locked)
@@ -240,13 +274,13 @@ async function validatePoolSessions(browser, sessionIds) {
     });
 
     if (!check.loggedIn) {
-      console.log('NOT LOGGED IN');
+      log(`  Session ${i}: NOT LOGGED IN`);
       results.notLoggedIn.push(i);
     } else if (check.isExpired) {
-      console.log(`EXPIRED (${check.expires})`);
+      log(`  Session ${i}: EXPIRED (${check.expires})`);
       results.expired.push(i);
     } else {
-      console.log(`valid (expires: ${check.expires})`);
+      log(`  Session ${i}: valid (expires: ${check.expires})`);
       results.valid.push(i);
     }
   }
@@ -256,10 +290,10 @@ async function validatePoolSessions(browser, sessionIds) {
     s.lastFullScan = new Date().toISOString();
   });
 
-  console.log(`\n=== Validation Summary ===`);
-  console.log(`Valid: ${results.valid.length}`);
-  console.log(`Expired: ${results.expired.length}`);
-  console.log(`Not logged in: ${results.notLoggedIn.length}`);
+  log(`\n=== Validation Summary ===`);
+  log(`Valid: ${results.valid.length}`);
+  log(`Expired: ${results.expired.length}`);
+  log(`Not logged in: ${results.notLoggedIn.length}`);
 
   return results;
 }

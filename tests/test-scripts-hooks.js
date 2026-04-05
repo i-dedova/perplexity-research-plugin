@@ -418,9 +418,9 @@ function run() {
     assert(result.includes('--ensure'), 'Help should mention --ensure flag');
   });
 
-  // Read source to validate prompt content (functions are not exported)
+  // Read source to validate prompt content
   const promptSource = readFileSync(
-    join(PLUGIN_ROOT, 'scripts', 'perplexity-research.mjs'), 'utf8'
+    join(PLUGIN_ROOT, 'scripts', 'lib', 'research-prompts.js'), 'utf8'
   );
 
   const startPromptBody = extractFunctionBody(promptSource, 'buildStartPrompt');
@@ -526,6 +526,69 @@ function run() {
   test('Synthesis prompt starts directly with Research Questions', () => {
     assert(synthesisBody.includes('Start directly with Research Questions'),
       'Synthesis prompt should instruct to start with Research Questions');
+  });
+
+  // === Cross-Platform Utilities ===
+  log('\n=== Cross-Platform Utilities ===');
+
+  const l = lib();
+
+  test('meetsMinVersion: equal versions pass', () => {
+    assert(l.cli.meetsMinVersion('0.1.1', '0.1.1'), '0.1.1 >= 0.1.1');
+  });
+
+  test('meetsMinVersion: higher patch passes', () => {
+    assert(l.cli.meetsMinVersion('0.1.5', '0.1.1'), '0.1.5 >= 0.1.1');
+  });
+
+  test('meetsMinVersion: lower patch fails', () => {
+    assert(!l.cli.meetsMinVersion('0.1.0', '0.1.1'), '0.1.0 < 0.1.1');
+  });
+
+  test('meetsMinVersion: multi-digit patch (0.1.10 >= 0.1.2)', () => {
+    assert(l.cli.meetsMinVersion('0.1.10', '0.1.2'), '0.1.10 >= 0.1.2 (numeric, not lexicographic)');
+  });
+
+  test('meetsMinVersion: old pre-0.1.x fails', () => {
+    assert(!l.cli.meetsMinVersion('0.0.63', '0.1.1'), '0.0.63 < 0.1.1');
+  });
+
+  test('stripCliXml: no-op on clean strings', () => {
+    const clean = 'ERROR: Something went wrong';
+    assertEqual(l.platform.stripCliXml(clean), clean, 'Should return unchanged');
+  });
+
+  test('stripCliXml: strips CLIXML blocks', () => {
+    const dirty = '#< CLIXML\n<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><Obj S="progress" RefId="0"></Obj></Objs>ERROR: real message';
+    const result = l.platform.stripCliXml(dirty);
+    assert(!result.includes('CLIXML'), 'Should remove CLIXML');
+    assert(result.includes('real message'), 'Should keep the actual error');
+  });
+
+  test('stripCliXml: handles null/undefined', () => {
+    assertEqual(l.platform.stripCliXml(null), null, 'null returns null');
+    assertEqual(l.platform.stripCliXml(undefined), undefined, 'undefined returns undefined');
+    assertEqual(l.platform.stripCliXml(''), '', 'empty string returns empty');
+  });
+
+  test('clearSessionRestore: cleans session restore files', () => {
+    const testDir = join(TEMP_DIR, 'fake-profile');
+    const sessionsDir = join(testDir, 'Default', 'Sessions');
+    mkdirSync(sessionsDir, { recursive: true });
+    writeFileSync(join(sessionsDir, 'Session_12345'), 'fake');
+    writeFileSync(join(sessionsDir, 'Tabs_67890'), 'fake');
+
+    l.platform.clearSessionRestore(testDir);
+
+    const remaining = existsSync(sessionsDir) ? require('fs').readdirSync(sessionsDir) : [];
+    assertEqual(remaining.length, 0, 'Should delete all session restore files');
+
+    try { rmSync(testDir, { recursive: true, force: true }); } catch {}
+  });
+
+  test('clearSessionRestore: no-op for missing dir', () => {
+    l.platform.clearSessionRestore(join(TEMP_DIR, 'nonexistent'));
+    // Should not throw
   });
 }
 

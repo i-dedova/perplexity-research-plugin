@@ -95,7 +95,7 @@ jobs:
           test -d scripts/lib || (echo "Missing: scripts/lib directory" && exit 1)
 
           # Check lib modules
-          for mod in index.js config.js platform.js playwright.js session-status.js session-cookie.js session-state.js cli.js; do
+          for mod in index.js config.js platform.js playwright.js session-status.js session-cookie.js session-state.js cli.js research-prompts.js research-ui.js; do
             test -f "scripts/lib/$mod" || (echo "Missing: scripts/lib/$mod" && exit 1)
           done
 

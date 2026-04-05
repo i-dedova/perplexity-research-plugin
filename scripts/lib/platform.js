@@ -61,8 +61,8 @@ function getPlaywrightSessionDir() {
     return null;
   }
 
-  // Find the hash directory — pick the most recently modified one
-  // (handles version upgrades that create new hash dirs)
+  // Find hash directories sorted by modification time (newest first).
+  // CLI version upgrades create new hash dirs, orphaning sessions in old ones.
   const subdirs = readdirSync(baseDir)
     .filter(f => {
       try { return statSync(join(baseDir, f)).isDirectory(); }
@@ -78,7 +78,37 @@ function getPlaywrightSessionDir() {
     return null;
   }
 
-  return join(baseDir, subdirs[0]);
+  const newestDir = join(baseDir, subdirs[0]);
+
+  // Auto-migrate: CLI upgrades create new daemon hash dirs, leaving sessions in old ones.
+  // Copy session dirs from old to new so users don't lose their authenticated sessions.
+  // Cookies and login state survive the copy — no re-login needed.
+  if (subdirs.length > 1) {
+    const hasSessions = (dir) => {
+      try { return readdirSync(dir).some(f => f.startsWith('ud-perplexity-')); }
+      catch { return false; }
+    };
+
+    if (!hasSessions(newestDir)) {
+      for (let i = 1; i < subdirs.length; i++) {
+        const oldDir = join(baseDir, subdirs[i]);
+        if (hasSessions(oldDir)) {
+          const sessions = readdirSync(oldDir).filter(f => f.startsWith('ud-perplexity-'));
+          for (const session of sessions) {
+            try {
+              const dest = join(newestDir, session);
+              if (!existsSync(dest)) {
+                require('fs').cpSync(join(oldDir, session), dest, { recursive: true });
+              }
+            } catch { /* skip failed copies */ }
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  return newestDir;
 }
 
 //endregion
@@ -174,9 +204,57 @@ public class Win32 {
 
 //endregion
 
+//region String Utilities
+
+/**
+ * Clear browser session restore files from a persistent profile.
+ * Prevents the browser from restoring previous tabs (including ghost about:blank tabs)
+ * when launched with --persistent. Works for Edge and Chrome.
+ * @param {string} userDataDir - Path to the browser's user-data-dir
+ */
+function clearSessionRestore(userDataDir) {
+  if (!userDataDir) return;
+  const sessionsDir = join(userDataDir, 'Default', 'Sessions');
+  if (!existsSync(sessionsDir)) return;
+
+  try {
+    const files = readdirSync(sessionsDir);
+    for (const file of files) {
+      try {
+        const filePath = join(sessionsDir, file);
+        if (statSync(filePath).isFile()) {
+          require('fs').unlinkSync(filePath);
+        }
+      } catch { /* skip locked files */ }
+    }
+  } catch { /* Sessions dir may not exist or be inaccessible */ }
+}
+
+/**
+ * Strip PowerShell CLIXML progress/error blocks from captured output.
+ * Windows-only issue: when Node's execFileSync captures stderr from a process
+ * that triggers PowerShell, the progress stream leaks XML blocks like:
+ *   #< CLIXML\n<Objs Version="1.1.0.1" ...>...</Objs>
+ * These pollute error messages and break JSON parsing.
+ * No-op on non-Windows or strings without CLIXML.
+ * @param {string} str - String to clean
+ * @returns {string} Cleaned string
+ */
+function stripCliXml(str) {
+  if (!str || !str.includes('CLIXML')) return str;
+  return str
+    .replace(/#< CLIXML\r?\n<Objs[\s\S]*?<\/Objs>/g, '')
+    .replace(/\r?\n{2,}/g, '\n')
+    .trim();
+}
+
+//endregion
+
 module.exports = {
   getPlatform,
   isWindows,
   getPlaywrightSessionDir,
-  minimizeWindows
+  minimizeWindows,
+  clearSessionRestore,
+  stripCliXml
 };

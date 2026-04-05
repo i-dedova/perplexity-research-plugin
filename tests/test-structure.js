@@ -29,7 +29,8 @@ function run() {
 
   test('All lib modules exist', () => {
     const modules = ['index.js', 'config.js', 'platform.js', 'playwright.js',
-                     'session-status.js', 'session-cookie.js', 'session-state.js', 'cli.js', 'file-lock.js', 'logger.js'];
+                     'session-status.js', 'session-cookie.js', 'session-state.js', 'cli.js',
+                     'file-lock.js', 'logger.js', 'research-prompts.js', 'research-ui.js'];
     for (const mod of modules) {
       assert(existsSync(join(LIB_PATH, mod)), `Missing: ${mod}`);
     }
@@ -88,11 +89,14 @@ function run() {
     assertFunction(l.platform, 'isWindows');
     assertFunction(l.platform, 'getPlaywrightSessionDir');
     assertFunction(l.platform, 'minimizeWindows');
+    assertFunction(l.platform, 'clearSessionRestore');
+    assertFunction(l.platform, 'stripCliXml');
   });
 
   test('lib.playwright exports', () => {
     assertObject(l, 'playwright');
     assertFunction(l.playwright, 'checkPlaywrightCli');
+    assertFunction(l.playwright, 'getPlaywrightCliPath');
     assertFunction(l.playwright, 'runCli');
     assertFunction(l.playwright, 'runCode');
     assertFunction(l.playwright, 'startSession');
@@ -100,6 +104,9 @@ function run() {
     assertFunction(l.playwright, 'isSessionRunning');
     assertFunction(l.playwright, 'verifySessionRunning');
     assertFunction(l.playwright, 'pressKey');
+    assertFunction(l.playwright, 'tabSelect');
+    assertFunction(l.playwright, 'tabClose');
+    assertFunction(l.playwright, 'getTabCount');
     assertType(l.playwright.CLI_TIMEOUT, 'number', 'CLI_TIMEOUT');
   });
 
@@ -137,6 +144,7 @@ function run() {
     assertObject(l, 'cli');
     assertFunction(l.cli, 'parseArgs');
     assertFunction(l.cli, 'sleep');
+    assertFunction(l.cli, 'meetsMinVersion');
   });
 
   test('lib.fileLock exports', () => {
@@ -176,9 +184,16 @@ function run() {
     assert(testLogger.file.includes('smoke-test-logger'), 'file should contain logger name');
   });
 
+  // Logger checks PERPLEXITY_TEST at create() time — unset it so write tests work,
+  // then restore after. This lets us test real I/O even when the harness is in test mode.
   test('Logger writes to file', () => {
+    const saved = process.env.PERPLEXITY_TEST;
+    delete process.env.PERPLEXITY_TEST;
+
     const testLogger = l.logger.create('smoke-test-write');
     testLogger.info('test message');
+
+    process.env.PERPLEXITY_TEST = saved;
 
     assert(existsSync(testLogger.file), 'Log file should exist after write');
     const content = readFileSync(testLogger.file, 'utf8');
@@ -189,10 +204,15 @@ function run() {
   });
 
   test('Logger writes all levels', () => {
+    const saved = process.env.PERPLEXITY_TEST;
+    delete process.env.PERPLEXITY_TEST;
+
     const testLogger = l.logger.create('smoke-test-levels');
     testLogger.info('info-msg');
     testLogger.warn('warn-msg');
     testLogger.error('error-msg');
+
+    process.env.PERPLEXITY_TEST = saved;
 
     const content = readFileSync(testLogger.file, 'utf8');
     assert(content.includes('INFO info-msg'), 'Should have INFO level');

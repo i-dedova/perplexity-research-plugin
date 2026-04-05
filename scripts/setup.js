@@ -186,7 +186,7 @@ function cmdCheck() {
       console.log('✗ Master session: EXPIRED (re-login required)');
     } else {
       console.log('✗ Master session: NOT FOUND');
-      console.log(`  Create with: PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli open https://perplexity.ai --persistent --headed --browser ${browser}`);
+      console.log(`  Create with: playwright-cli -s=perplexity-pro open https://perplexity.ai --persistent --headed --browser ${browser}`);
     }
 
     if (status.sessions.poolCount > 0) {
@@ -290,7 +290,7 @@ async function cmdClonePool(args) {
 
   const sessionDir = platform.getPlaywrightSessionDir();
   if (!sessionDir) {
-    throw new Error('Playwright session directory not found. Run "PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli open https://perplexity.ai --persistent --headed" at least once.');
+    throw new Error('Playwright session directory not found. Run "playwright-cli -s=perplexity-pro open https://perplexity.ai --persistent --headed" at least once.');
   }
 
   const masterPath = sessionStatus.getMasterSessionPath(browser);
@@ -299,7 +299,7 @@ async function cmdClonePool(args) {
   }
 
   // Step 1: Validate master session — if expired, try to promote a valid pool session
-  const masterCheck = await validateMasterSession(browser);
+  const masterCheck = await validateMasterSession(browser, { log: console.log });
   if (!masterCheck.loggedIn) {
     console.log('Master session expired. Searching for valid pool session to promote...');
     const cachedStatus = sessionStatus.getSessionStatus();
@@ -313,7 +313,7 @@ async function cmdClonePool(args) {
       cpSync(donorPath, masterPath, { recursive: true });
 
       // Re-validate the promoted master
-      const recheck = await validateMasterSession(browser);
+      const recheck = await validateMasterSession(browser, { log: console.log });
       if (!recheck.loggedIn) {
         throw new Error('Promoted session also expired. Please re-login.');
       }
@@ -350,7 +350,7 @@ async function cmdClonePool(args) {
 
   // Step 3: Validate each pool session individually
   if (!skipValidation) {
-    const results = await validatePoolSessions(browser, count);
+    const results = await validatePoolSessions(browser, count, { log: console.log });
     return { cloned, skipped, total: cloned + skipped, validation: results };
   }
 
@@ -403,14 +403,14 @@ async function cmdScanSessions(args) {
   }
 
   console.log(`Scanning ${poolCheck.poolCount} sessions...`);
-  return await validatePoolSessions(browser, poolCheck.poolSessions);
+  return await validatePoolSessions(browser, poolCheck.poolSessions, { log: console.log });
 }
 
 async function cmdRefreshSession(sessionId, args) {
   const id = parseSessionId(sessionId, 'refresh-session');
 
   const browser = args.browser || config.getBrowser();
-  await refreshSession(id, browser);
+  await refreshSession(id, browser, { log: console.log });
 }
 
 async function cmdEnsureValid(sessionId, args) {
@@ -423,7 +423,8 @@ async function cmdEnsureValid(sessionId, args) {
   const browser = args.browser || config.getBrowser();
   console.error(`Validating session ${id}...`);
 
-  const result = await ensureSessionValid(id, browser);
+  // Hook captures stdout for JSON — route status messages to stderr
+  const result = await ensureSessionValid(id, browser, { log: msg => console.error(msg) });
   console.log(JSON.stringify(result));
 
   if (!result.success) {
@@ -492,7 +493,7 @@ async function main() {
         process.exit(command ? 1 : 0);
     }
   } catch (error) {
-    console.error(`ERROR: ${error.message}`);
+    console.error(`ERROR: ${platform.stripCliXml(error.message)}`);
     process.exit(1);
   }
 }

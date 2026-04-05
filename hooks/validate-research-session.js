@@ -37,6 +37,8 @@ const fileLog = logger.create(`hook-${date}`);
   } catch {}
 })();
 
+const { meetsMinVersion } = require(join(PLUGIN_ROOT, 'scripts', 'lib', 'cli'));
+
 const logs = [];
 function log(msg) {
   fileLog.info(msg);
@@ -121,9 +123,10 @@ function ensureSessionValid(sessionId) {
     log(`ensure-valid ${sessionId}: NO JSON found in output, returning fallback success`);
     return { success: true };
   } catch (e) {
-    log(`ensure-valid ${sessionId}: CAUGHT ERROR code=${e.status} stderr=${(e.stderr || '').substring(0, 200)}`);
-    if (e.stderr) {
-      const jsonMatch = e.stderr.match(/\{.*\}/);
+    const cleanStderr = platform.stripCliXml(e.stderr || '');
+    log(`ensure-valid ${sessionId}: CAUGHT ERROR code=${e.status} stderr=${cleanStderr.substring(0, 200)}`);
+    if (cleanStderr) {
+      const jsonMatch = cleanStderr.match(/\{.*\}/);
       if (jsonMatch) {
         try {
           const parsed = JSON.parse(jsonMatch[0]);
@@ -132,7 +135,7 @@ function ensureSessionValid(sessionId) {
         } catch {}
       }
     }
-    return { success: false, error: e.message };
+    return { success: false, error: platform.stripCliXml(e.message) };
   }
 }
 
@@ -147,9 +150,11 @@ function checkPrerequisites() {
 
   const cliCheck = playwright.checkPlaywrightCli();
   if (!cliCheck.installed) {
-    issues.push('playwright-cli is not installed');
+    issues.push('playwright-cli is not installed. Install with: npm install -g @playwright/cli@latest');
+  } else if (cliCheck.packageVersion && !meetsMinVersion(cliCheck.packageVersion, '0.1.1')) {
+    issues.push(`playwright-cli ${cliCheck.packageVersion} is too old (minimum: 0.1.1). Update with: npm install -g @playwright/cli@latest`);
   }
-  log(`step1: cli installed=${cliCheck.installed} version=${cliCheck.version}`);
+  log(`step1: cli installed=${cliCheck.installed} version=${cliCheck.version} package=${cliCheck.packageVersion}`);
 
   const cfg = config.getConfig();
   if (!cfg.browser) {
@@ -199,7 +204,7 @@ function validateAndStartBrowser(assignedSession, cfg) {
   if (!sessionResult.success) {
     const issue = sessionResult.needsRelogin
       ? 'All sessions expired. Run /perplexity-setup to re-login.'
-      : `Session validation failed: ${sessionResult.error || 'unknown error'}`;
+      : `Session validation failed: ${platform.stripCliXml(sessionResult.error || 'unknown error')}`;
     return { sessionResult, browserStarted: false, issue };
   }
 

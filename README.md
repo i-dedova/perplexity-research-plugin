@@ -8,7 +8,7 @@ Automate deep research via Perplexity using Playwright CLI browser automation. T
 
 - **Perplexity Pro or Max subscription** (free tier has limited access)
 - **Node.js** 18 or newer
-- **playwright-cli** >= 0.1.0 (`@playwright/cli` on npm)
+- **playwright-cli** >= 0.1.1 (`@playwright/cli` on npm, tested through 0.1.5)
 
 ### Step 1: Add the Marketplace
 
@@ -98,7 +98,9 @@ The wizard is smart: it runs a preflight check, identifies what's broken or miss
 |-------|----------|
 | Plugin not discoverable after install | Restart Claude Code (close all sessions first, then reopen) |
 | Plugin doesn't update | Update the marketplace first, then the plugin: `claude plugin marketplace update i-dedova-perplexity-research-plugin` then `claude plugin update perplexity-research@i-dedova-perplexity-research-plugin` |
-| playwright-cli not found | `npm install -g @playwright/cli@latest` |
+| playwright-cli not found | `npm install -g @playwright/cli@latest` (minimum 0.1.1) |
+| playwright-cli too old | `npm install -g @playwright/cli@latest` — the hook shows the exact version needed |
+| Ghost/blank tab appears during research | Expected on first launch (Edge/Chrome behavior) — auto-closed within seconds |
 | Session not running | Run `/perplexity-setup` or `ppx-research init-pool --count 1` |
 | Not logged in / sessions expired | Run `/perplexity-setup` — it detects this and guides re-login |
 | Model not switching | Check your subscription tier in config — `claude-opus-4.6` requires Max |
@@ -169,6 +171,14 @@ output_dir: docs/research  # relative folder for research outputs
 
 If the config file is deleted, run `/perplexity-setup` to recreate it with your previous settings (or defaults).
 
+## Compatibility
+
+**Minimum:** `@playwright/cli` 0.1.1. **Tested through:** 0.1.5. The validation hook checks the package version at startup and blocks research with a clear upgrade message if below minimum.
+
+**CI matrix:** 3 platforms (Ubuntu, macOS, Windows) × 2 Node versions (18, 22) × CLI `@latest`, plus a dedicated minimum-version job (`@0.1.1` on Ubuntu/Node 22). This ensures new CLI releases don't break the plugin, and the plugin doesn't accidentally use features unavailable in the minimum version.
+
+**Upgrade:** `npm install -g @playwright/cli@latest`. No user action needed — the plugin auto-migrates sessions to the new CLI's daemon directory and handles API differences (session flag format, spawn behavior) internally.
+
 ## Architecture
 
 ```
@@ -179,16 +189,18 @@ scripts/
 ├── lib/                         # Shared modules
 │   ├── index.js                 # Barrel exports (require('./lib'))
 │   ├── config.js                # Config paths, reading, writing
-│   ├── platform.js              # Platform detection, window minimize
-│   ├── playwright.js            # CLI wrapper, session management
+│   ├── platform.js              # Platform detection, window minimize, CLIXML stripping
+│   ├── playwright.js            # CLI wrapper, session + tab management
 │   ├── session-status.js        # Session tracking JSON
-│   ├── session-cookie.js        # Cookie validation, refresh
+│   ├── session-cookie.js        # Cookie validation, refresh, phantom tab cleanup
 │   ├── session-state.js         # Runtime research state
+│   ├── research-prompts.js      # Prompt templates (search, deep, followup, synthesis)
+│   ├── research-ui.js           # Playwright UI automation (query, poll, download)
 │   ├── file-lock.js             # Concurrent file locking, atomic writes
 │   ├── cli.js                   # Argument parsing utilities
 │   └── logger.js                # File-based logging
 ├── setup.js                     # Setup CLI (check, preflight, clone-pool, etc.)
-├── perplexity-research.mjs      # Research CLI (start, followup, download, etc.)
+├── perplexity-research.mjs      # Research CLI dispatcher (start, followup, download, etc.)
 └── cleanup.js                   # Temp file cleanup
 
 hooks/
@@ -295,9 +307,9 @@ export PATH="$HOME/.claude/bin:$PATH"
 ### 2. Create Master Session
 
 ```bash
-PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli open https://perplexity.ai --persistent --headed --browser msedge  # or chrome on macOS/Linux
+playwright-cli -s=perplexity-pro open https://perplexity.ai --persistent --headed --browser msedge  # or chrome on macOS/Linux
 # Log in manually, then:
-PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli close
+playwright-cli -s=perplexity-pro close
 ```
 
 ### 3. Clone Session Pool

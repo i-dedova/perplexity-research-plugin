@@ -16,6 +16,8 @@ const sessionState = require('./session-state');
 const cli = require('./cli');
 const fileLock = require('./file-lock');
 const logger = require('./logger');
+const researchPrompts = require('./research-prompts');
+const researchUi = require('./research-ui');
 
 module.exports = {
   config,
@@ -27,6 +29,8 @@ module.exports = {
   cli,
   fileLock,
   logger,
+  researchPrompts,
+  researchUi,
 
   // Convenience re-exports for common functions
   PATHS: config.PATHS,

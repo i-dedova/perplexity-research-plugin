@@ -157,7 +157,7 @@ Use AskUserQuestion:
 
 2. Open browser:
 ```bash
-PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli open https://perplexity.ai --persistent --headed --browser {browser}
+playwright-cli -s=perplexity-pro open https://perplexity.ai --persistent --headed --browser {browser}
 ```
 
 3. Tell user: "Log into Perplexity. Complete 2FA if required."
@@ -166,7 +166,7 @@ PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli open https://perplexity.ai 
 
 5. Close session:
 ```bash
-PLAYWRIGHT_CLI_SESSION=perplexity-pro playwright-cli close
+playwright-cli -s=perplexity-pro close
 ```
 
 ---

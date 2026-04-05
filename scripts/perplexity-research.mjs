@@ -14,14 +14,14 @@
  */
 
 import { createRequire } from 'module';
-import { existsSync, readdirSync, renameSync, statSync } from 'fs';
-import { join } from 'path';
 
 // Import CommonJS lib modules
 const require = createRequire(import.meta.url);
 const { platform, playwright, sessionState, sessionCookie, cli, config, logger, PATHS } = require('./lib');
 const { sleep, parseArgs } = cli;
 const { saveSessionState, getSessionState, clearSessionState } = sessionState;
+const { buildStartPrompt, buildFollowupPrompt, buildSynthesisPrompt } = require('./lib/research-prompts');
+const { configureSession, submitQuery, getDownloadCount, closePhantomTabs, waitForResponse, readResponseText, downloadResponse } = require('./lib/research-ui');
 
 // Per-session logging helper
 const researchDate = new Date().toISOString().slice(0, 10);
@@ -52,335 +52,6 @@ const RESEARCH_CONFIG = {
 
 // Register CWD in tracked dirs and ensure .playwright-cli/ exists
 config.registerCwd();
-
-//endregion
-
-//region UI Interactions
-
-function setResearchMode(sessionId, mode) {
-  if (mode !== 'deep') return;
-  const code = `async page => {
-    await page.getByRole('button', { name: 'Add files or tools' }).click();
-    await page.waitForTimeout(400);
-    await page.getByRole('menuitemradio', { name: 'Deep research' }).click();
-    await page.waitForTimeout(300);
-  }`;
-  playwright.runCode(sessionId, code.replace(/\n/g, ' '), 10000);
-}
-
-function setSources(sessionId, sources) {
-  // Open "+" menu → "Connectors and sources" submenu
-  playwright.runCode(sessionId, `async page => {
-    await page.getByRole('button', { name: 'Add files or tools' }).click();
-    await page.waitForTimeout(400);
-    await page.getByRole('menuitem', { name: 'Connectors and sources' }).click();
-    await page.waitForTimeout(400);
-  }`.replace(/\n/g, ' '), 10000);
-
-  // Toggle academic/social (Web checked by default)
-  for (const source of sources) {
-    if (['academic', 'social'].includes(source.toLowerCase())) {
-      const name = source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
-      playwright.runCode(sessionId,
-        `async page => await page.getByRole('menuitemcheckbox', { name: '${name}' }).click()`);
-    }
-  }
-  playwright.pressKey(sessionId, 'Escape');
-}
-
-function configureModel(sessionId, modelSlug, thinking) {
-  if (!modelSlug || modelSlug === 'best') return;
-
-  const displayName = config.getModelDisplayName(modelSlug);
-  if (!displayName) return;
-
-  // Open model dropdown and select model
-  playwright.runCode(sessionId, `async page => {
-    const btn = page.locator('button').filter({ hasText: /choose a model|${displayName}/i }).first();
-    await btn.click();
-    await page.waitForTimeout(400);
-    await page.getByRole('menuitem', { name: '${displayName}' }).click();
-    await page.waitForTimeout(300);
-  }`.replace(/\n/g, ' '), 10000);
-
-  // Handle thinking toggle for toggleable models
-  const { THINKING_TOGGLEABLE, THINKING_ALWAYS_ON } = config;
-  if (THINKING_TOGGLEABLE.includes(modelSlug) && thinking !== undefined && thinking !== null) {
-    const wantThinking = thinking === 'true' || thinking === true;
-    playwright.runCode(sessionId, `async page => {
-      const btn = page.locator('button').filter({ hasText: /choose a model|${displayName}/i }).first();
-      await btn.click();
-      await page.waitForTimeout(400);
-      const toggle = page.getByRole('switch', { name: 'Toggle option' });
-      if (await toggle.count() > 0) {
-        const checked = await toggle.getAttribute('aria-checked');
-        const isOn = checked === 'true';
-        if (${wantThinking} !== isOn) {
-          await toggle.click();
-          await page.waitForTimeout(200);
-        }
-      }
-      await page.keyboard.press('Escape');
-    }`.replace(/\n/g, ' '), 10000);
-  }
-}
-
-function configureSession(sessionId, { model, thinking, mode, sources }) {
-  if (model && model !== 'dynamic') {
-    configureModel(sessionId, model, thinking);
-  }
-  setResearchMode(sessionId, mode);
-  if (sources && sources.length > 0 && !sources.every(s => s === 'web')) {
-    setSources(sessionId, sources);
-  }
-}
-
-function submitQuery(sessionId, prompt) {
-  const b64Prompt = Buffer.from(prompt).toString('base64');
-  const code = `async page => {
-    const decoded = await page.evaluate((b64) => atob(b64), '${b64Prompt}');
-    await page.locator('#ask-input').fill(decoded);
-  }`;
-  playwright.runCode(sessionId, code.replace(/\n/g, ' '));
-  playwright.pressKey(sessionId, 'Enter');
-}
-
-function getDownloadCount(sessionId) {
-  const result = playwright.runCode(sessionId, "async page => await page.getByRole('button', { name: 'Download' }).count()");
-  const match = result?.match(/### Result\s*\n(\d+)/);
-  return match ? parseInt(match[1], 10) : 0;
-}
-
-async function waitForResponse(sessionId, countBefore, timeoutMs) {
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < timeoutMs) {
-    const count = getDownloadCount(sessionId);
-    if (count > countBefore) return;
-    await sleep(RESEARCH_CONFIG.pollInterval);
-  }
-
-  throw new Error(`Timeout waiting for Perplexity response after ${timeoutMs}ms`);
-}
-
-function readResponseText(sessionId) {
-  const code = 'async page => await page.evaluate(() => { ' +
-    'const p = document.querySelectorAll("[class*=\\"prose\\"]"); ' +
-    'return p[p.length - 1]?.innerText || null; })';
-  const result = playwright.runCode(sessionId, code, 15000);
-  if (!result) return null;
-  const match = result.match(/### Result\s*\n([\s\S]*)/);
-  if (!match) return null;
-  try { return JSON.parse(match[1].trim()); }
-  catch { return match[1].trim().replace(/^"|"$/g, ''); }
-}
-
-async function downloadResponse(sessionId, topicSlug, type) {
-  const existingFiles = new Set();
-  if (existsSync(PATHS.downloadsDir)) {
-    readdirSync(PATHS.downloadsDir).filter(f => f.endsWith('.md')).forEach(f => existingFiles.add(f));
-  }
-
-  playwright.runCode(sessionId, "async page => await page.getByRole('button', { name: 'Download' }).last().click()");
-  await sleep(1000);
-  playwright.runCode(sessionId, "async page => await page.getByRole('menuitem', { name: 'Markdown' }).click()");
-
-  let downloadedFile = null;
-  const maxAttempts = 10;
-  const retryDelay = 1000;
-
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    await sleep(retryDelay);
-    if (!existsSync(PATHS.downloadsDir)) continue;
-
-    const currentFiles = readdirSync(PATHS.downloadsDir)
-      .filter(f => f.endsWith('.md'))
-      .map(f => ({
-        name: f,
-        path: join(PATHS.downloadsDir, f),
-        mtime: statSync(join(PATHS.downloadsDir, f)).mtime
-      }));
-
-    const startTime = Date.now() - (attempt + 1) * retryDelay - 2000;
-
-    for (const file of currentFiles) {
-      if (!existingFiles.has(file.name) || file.mtime.getTime() > startTime) {
-        downloadedFile = file;
-        break;
-      }
-    }
-
-    if (downloadedFile) break;
-  }
-
-  if (!downloadedFile) {
-    throw new Error(`No new markdown file found in ${PATHS.downloadsDir}`);
-  }
-
-  const timestamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').substring(0, 15);
-  const newName = `${topicSlug}-${type}-${timestamp}.md`;
-  const newPath = join(PATHS.downloadsDir, newName);
-
-  renameSync(downloadedFile.path, newPath);
-  return newPath;
-}
-
-//endregion
-
-//region Prompt Building
-
-const SEARCH_METHODOLOGY = `Before responding, create a brief research plan:
-1. Identify the key aspects to investigate
-2. For each aspect, consult multiple independent sources
-3. Cross-validate findings — a claim supported by 3+ sources is a pattern; a single-source claim is anecdotal, flag it as such
-
-Focus on depth and reliability over speed. Prioritize:
-- Authoritative, primary sources over secondary summaries
-- Patterns confirmed across multiple sources over one-off claims
-- Contradictions between sources — flag these explicitly
-- Practical, actionable findings over theoretical overviews`;
-
-function buildStartPrompt(context, question, mode) {
-  if (mode === 'deep') {
-    return `${question}
-
-${context}
-
----
-
-Respond in chat directly. Do not create downloadable documents or files.
-All output in plain Markdown format — text, headers, bullets, code blocks,
-and inline Markdown tables. Use Markdown tables for all comparisons.
-
-Before researching, create a brief research plan:
-1. Break the question into key aspects to investigate
-2. For each aspect, identify what evidence would be most valuable
-3. Prioritize primary and authoritative sources over secondary summaries
-
-Think critically about each finding:
-- Evaluate source credibility and recency
-- Distinguish established best practices from emerging or contested approaches
-- Where sources contradict each other, assess the strongest arguments on each side
-- Cross-validate claims across multiple independent sources
-
-Structure your response as a detailed reference document.
-Someone should be able to make informed decisions from this alone.
-
-## Findings
-
-### {Theme/Topic 1}
-For each finding:
-- State what you found and the strength of evidence (how many sources agree)
-- Include specific details: versions, configurations, code examples, exact numbers
-- Where sources contradict, present the strongest argument on each side
-- Cover trade-offs, edge cases, and failure modes
-- Flag single-source claims separately from cross-validated patterns
-
-### {Theme/Topic 2}
-{Same depth}
-
-## Contradictions and Open Questions
-- Where sources disagreed and the strongest argument on each side
-- Questions that remain unanswered despite thorough search
-- Areas where the landscape is actively changing
-
-## Recommendations
-1. **{Recommendation}**: Detailed rationale including why alternatives were
-   rejected, conditions where this applies, and risks to watch for
-
-Start directly with the research plan, then findings.
-Each finding appears once, in one section only.
-Specific over general: exact versions, real benchmarks, actual code.
-End with Recommendations as the final section.`;
-  }
-
-  return `${question}
-
-${context}
-
----
-
-${SEARCH_METHODOLOGY}
-
-Respond in chat directly. Do not create downloadable documents or files.
-All output in plain Markdown format — text, headers, bullets, code blocks, and inline Markdown tables.
-
-## Findings
-{Organize by topic/theme with headers}
-- Use bullets for key points
-- Code snippets where relevant, short and focused
-- Flag whether each finding is a cross-validated pattern or single-source claim
-- Note contradictions between sources
-- Each finding appears once, in one section only
-- End with Recommendations as the final section
-
-## Recommendations
-1. **{Recommendation}**: {rationale}`;
-}
-
-function buildFollowupPrompt(question) {
-  return `${question}
-
----
-
-Respond in chat directly. Do not create downloadable documents or files.
-All output in plain Markdown format — text, headers, bullets, code blocks, and inline Markdown tables.
-Continue cross-validating across sources. Flag patterns vs single-source claims.
-
-## Findings
-{Organize by topic/theme with headers}
-- Flag cross-validated patterns vs single-source claims
-- Note contradictions between sources
-- Each finding appears once, in one section only
-
-## Recommendations
-1. **{Recommendation}**: {rationale}`;
-}
-
-function buildSynthesisPrompt(include, exclude = '') {
-  const excludeSection = exclude ? `\n\nEXCLUDE (do not include these in synthesis):\n${exclude}` : '';
-
-  return `INCLUDE:
-${include}${excludeSection}
-
----
-
-Synthesize this entire research thread into a comprehensive, decision-ready document.
-
-Respond in chat directly. Do not create downloadable documents or files.
-All output in plain Markdown format — text, headers, bullets, code blocks, and inline Markdown tables.
-
-Create a thorough synthesis that someone can use to make informed decisions. This is NOT a summary — it should be more detailed and structured than any individual response in this thread.
-
-FORMAT:
-
-## Research Questions
-{List each question explored in this thread}
-
-## Findings
-
-### {Theme/Topic 1}
-{Detailed findings organized by theme. For each finding:}
-- What was found and from how many sources
-- Whether this is a cross-validated pattern or single-source claim
-- Relevant code examples, configurations, or specifications
-- Trade-offs, limitations, and edge cases
-
-### {Theme/Topic 2}
-{Same structure}
-
-## Contradictions and Open Questions
-- {Where sources disagreed and what each side argues}
-- {Questions that remain unanswered or need further investigation}
-
-## Recommendations
-1. **{Recommendation}**: {detailed rationale including why alternatives were rejected, conditions where this applies, and risks to watch for}
-
-Start directly with Research Questions.
-Each finding appears once, in one section only.
-Prefer depth over brevity — include enough detail to act on.
-End with Recommendations as the final section.`;
-}
 
 //endregion
 
@@ -461,11 +132,13 @@ async function cmdStart(args) {
   }
 
   configureSession(sessionId, { model: resolvedModel, thinking: resolvedThinking, mode, sources });
+  closePhantomTabs(sessionId, log);
   saveSessionState(sessionId, mode, topicSlug, strategy, resolvedModel, resolvedThinking);
 
   const fullPrompt = buildStartPrompt(context, question, mode);
   const countBefore = getDownloadCount(sessionId);
   submitQuery(sessionId, fullPrompt);
+  closePhantomTabs(sessionId, log);
   platform.minimizeWindows('Perplexity');
 
   // Use extended timeout for search with thinking or auto-routed model
@@ -474,7 +147,8 @@ async function cmdStart(args) {
   const timeoutMs = RESEARCH_CONFIG.timeout[timeoutKey];
   log.info(`start: using timeout=${timeoutMs}ms (${timeoutKey})`);
 
-  await waitForResponse(sessionId, countBefore, timeoutMs);
+  await waitForResponse(sessionId, countBefore, timeoutMs, log);
+  playwright.tabSelect(sessionId, 0);
   const text = readResponseText(sessionId);
   if (!text) throw new Error('Failed to read response from page');
   log.info(`start: completed in ${Date.now() - startTime}ms, response=${text.length}chars`);
@@ -502,9 +176,11 @@ async function cmdFollowup(args) {
   const fullPrompt = buildFollowupPrompt(question);
   const countBefore = getDownloadCount(sessionId);
   submitQuery(sessionId, fullPrompt);
+  closePhantomTabs(sessionId, log);
   platform.minimizeWindows('Perplexity');
 
-  await waitForResponse(sessionId, countBefore, RESEARCH_CONFIG.timeout.search);
+  await waitForResponse(sessionId, countBefore, RESEARCH_CONFIG.timeout.search, log);
+  playwright.tabSelect(sessionId, 0);
   const text = readResponseText(sessionId);
   if (!text) throw new Error('Failed to read response from page');
   log.info(`followup: completed in ${Date.now() - startTime}ms, response=${text.length}chars`);
@@ -542,8 +218,9 @@ async function cmdSynthesize(args) {
   const fullPrompt = buildSynthesisPrompt(include, exclude || '');
   const countBefore = getDownloadCount(sessionId);
   submitQuery(sessionId, fullPrompt);
+  closePhantomTabs(sessionId, log);
 
-  await waitForResponse(sessionId, countBefore, 300000);
+  await waitForResponse(sessionId, countBefore, 300000, log);
   const filePath = await downloadResponse(sessionId, state.topicSlug, 'synthesis');
   log.info(`synthesize: completed in ${Date.now() - startTime}ms, saved to ${filePath}`);
   console.log(filePath);
@@ -553,6 +230,8 @@ function cmdClose(args) {
   const sessionId = args.session || '0';
   const log = getLog(sessionId);
   log.info(`close: session=${sessionId}`);
+  // Clean up phantom tabs before stopping (prevents stale tabs in persistent profile)
+  closePhantomTabs(sessionId, log);
   playwright.stopSession(sessionId);
   // Release session claim so other agents can use it
   sessionCookie.releaseSession(parseInt(sessionId, 10));
@@ -575,7 +254,7 @@ async function cmdEnsureSession(args) {
   }
 
   console.log(`Ensuring session perplexity-${sessionId} is valid...`);
-  const result = await sessionCookie.ensureSessionValid(parseInt(sessionId, 10), browser);
+  const result = await sessionCookie.ensureSessionValid(parseInt(sessionId, 10), browser, { log: console.log });
   log.info(`ensure-session: validation success=${result.success} sessionStarted=${result.sessionStarted}`);
 
   if (!result.success) {
@@ -678,7 +357,7 @@ async function main() {
         process.exit(command ? 1 : 0);
     }
   } catch (error) {
-    console.error(`ERROR: ${error.message}`);
+    console.error(`ERROR: ${platform.stripCliXml(error.message)}`);
     process.exit(1);
   }
 }

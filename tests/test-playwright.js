@@ -25,16 +25,42 @@ async function run() {
   test('checkPlaywrightCli returns valid structure', () => {
     assert('installed' in cliCheck, 'Should have installed property');
     assert('version' in cliCheck, 'Should have version property');
+    assert('packageVersion' in cliCheck, 'Should have packageVersion property');
     assertType(cliCheck.installed, 'boolean', 'installed');
     if (cliCheck.installed) {
       assertType(cliCheck.version, 'string', 'version');
+      assertType(cliCheck.packageVersion, 'string', 'packageVersion');
+      // Package version must be semver-like (0.1.x)
+      assert(cliCheck.packageVersion.match(/^\d+\.\d+\.\d+/),
+        `packageVersion should be semver, got: ${cliCheck.packageVersion}`);
+      logVerbose(`CLI version: ${cliCheck.version}, package: ${cliCheck.packageVersion}`);
     }
+  });
+
+  test('packageVersion meets minimum 0.1.1', () => {
+    if (!cliCheck.installed) return;
+    assert(cliCheck.packageVersion >= '0.1.1',
+      `Package version ${cliCheck.packageVersion} is below minimum 0.1.1`);
   });
 
   test('isSessionRunning returns boolean', () => {
     const result = playwright.isSessionRunning('non-existent-session');
     assertType(result, 'boolean', 'isSessionRunning');
     assertEqual(result, false, 'Non-existent session should not be running');
+  });
+
+  // Tab management — unit tests (no session needed)
+  test('getTabCount returns -1 for non-existent session', () => {
+    const count = playwright.getTabCount('non-existent-999');
+    assertEqual(count, -1, 'Should return -1 when session does not exist');
+  });
+
+  test('tabSelect does not throw for non-existent session', () => {
+    playwright.tabSelect('non-existent-999', 0);
+  });
+
+  test('tabClose does not throw for non-existent session', () => {
+    playwright.tabClose('non-existent-999', 0);
   });
 
   // Conditional tests - run if playwright-cli is installed (local dev)
@@ -106,6 +132,42 @@ async function run() {
         playwright.pressKey(TEST_SESSION, 'Escape');
       });
 
+      // Tab management — integration tests (live session)
+      test('getTabCount returns positive number for running session', () => {
+        const count = playwright.getTabCount(TEST_SESSION);
+        assert(count >= 1, `Expected >= 1 tab, got ${count}`);
+        logVerbose(`Tab count: ${count}`);
+      });
+
+      test('tabSelect(0) does not throw for running session', () => {
+        playwright.tabSelect(TEST_SESSION, 0);
+      });
+
+      test('tab-new + getTabCount detects extra tab', () => {
+        const before = playwright.getTabCount(TEST_SESSION);
+        // Open a phantom tab to simulate the bug
+        try {
+          require('child_process').execFileSync(
+            process.execPath,
+            [playwright.getPlaywrightCliPath(), `-s=perplexity-${TEST_SESSION}`, 'tab-new'],
+            { encoding: 'utf8', timeout: 8000, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] }
+          );
+        } catch { /* tab-new may not be available in all versions */ }
+
+        const after = playwright.getTabCount(TEST_SESSION);
+        if (after > before) {
+          logVerbose(`Phantom tab created: ${before} → ${after}`);
+          // Clean it up via tabClose
+          playwright.tabClose(TEST_SESSION, after - 1);
+          playwright.tabSelect(TEST_SESSION, 0);
+          const final = playwright.getTabCount(TEST_SESSION);
+          assertEqual(final, before, `Tab count should return to ${before} after close`);
+          logVerbose(`Phantom tab closed: ${after} → ${final}`);
+        } else {
+          logVerbose(`tab-new did not increase count (before=${before}, after=${after}), skipping close test`);
+        }
+      });
+
       await testAsync('checkSessionCookie validates with retry', async () => {
         const { sessionCookie } = lib();
         // Session 0 should already be stopped. checkSessionCookie starts it, checks, stops.
@@ -131,6 +193,9 @@ async function run() {
       skip('isSessionRunning (live)', 'No session pool configured');
       skip('runCode', 'No session pool configured');
       skip('pressKey', 'No session pool configured');
+      skip('getTabCount (live)', 'No session pool configured');
+      skip('tabSelect (live)', 'No session pool configured');
+      skip('tab-new + close cycle', 'No session pool configured');
       skip('stopSession', 'No session pool configured');
     }
   } else {
@@ -138,6 +203,9 @@ async function run() {
     skip('isSessionRunning (live)', 'playwright-cli not installed');
     skip('runCode', 'playwright-cli not installed');
     skip('pressKey', 'playwright-cli not installed');
+    skip('getTabCount (live)', 'playwright-cli not installed');
+    skip('tabSelect (live)', 'playwright-cli not installed');
+    skip('tab-new + close cycle', 'playwright-cli not installed');
     skip('stopSession', 'playwright-cli not installed');
   }
 
@@ -186,7 +254,7 @@ async function run() {
         const output = ciCli(['open', 'https://example.com', '--persistent', '--browser', 'chromium'], { timeout: 20000 });
         logVerbose(`open output: ${output.substring(0, 200)}`);
       } catch (e) {
-        logVerbose(`open stderr: ${e.stderr?.substring(0, 200)}`);
+        logVerbose(`open stderr: ${(e.stderr || '').replace(/#< CLIXML[\s\S]*?<\/Objs>/g, '').trim().substring(0, 200)}`);
       }
       syncSleep(3000);
     });
@@ -195,6 +263,27 @@ async function run() {
       const output = ciCli(['list']);
       logVerbose(`list output: ${output.substring(0, 300)}`);
       assert(output.includes(CI_SESSION), `Session ${CI_SESSION} should appear in list`);
+    });
+
+    // Tab management — tests the phantom tab fix (no extra sleeps, pure CLI calls)
+    test('run-code returns tab count of 1 for fresh session', () => {
+      const result = ciCli(['run-code', 'async page => page.context().pages().length']);
+      logVerbose(`tab count result: ${result.substring(0, 100)}`);
+      assert(result.includes('1'), `Fresh session should have 1 tab, got: ${result.trim()}`);
+    });
+
+    test('tab-new + tab-close lifecycle', () => {
+      // Create a phantom tab
+      ciCli(['tab-new']);
+      const after = ciCli(['run-code', 'async page => page.context().pages().length']);
+      logVerbose(`after tab-new: ${after.substring(0, 100)}`);
+
+      // Close phantom tab and return to tab 0
+      ciCli(['tab-close', '1']);
+      ciCli(['tab-select', '0']);
+      const final = ciCli(['run-code', 'async page => page.context().pages().length']);
+      logVerbose(`after tab-close: ${final.substring(0, 100)}`);
+      assert(final.includes('1'), `Should return to 1 tab after close, got: ${final.trim()}`);
     });
 
     test('close CI session', () => {
@@ -236,7 +325,7 @@ async function run() {
           const output = ciHeadedCli(['open', 'https://example.com', '--persistent', '--headed', '--browser', 'chromium'], { timeout: 25000 });
           logVerbose(`headed open output: ${output.substring(0, 200)}`);
         } catch (e) {
-          logVerbose(`headed open stderr: ${e.stderr?.substring(0, 200)}`);
+          logVerbose(`headed open stderr: ${(e.stderr || '').replace(/#< CLIXML[\s\S]*?<\/Objs>/g, '').trim().substring(0, 200)}`);
         }
         syncSleep(5000);
       });
