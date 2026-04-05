@@ -63,9 +63,13 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          # Ensure playwright is available for install-deps
           npm list -g playwright > /dev/null 2>&1 || npm install -g playwright@latest
-          playwright install-deps chromium
+          npx playwright install-deps chromium
+
+      - name: Clean daemon state (Windows cache includes daemon dir alongside browsers)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: rm -rf ~/AppData/Local/ms-playwright/daemon
 
       - name: Install alias
         shell: bash
