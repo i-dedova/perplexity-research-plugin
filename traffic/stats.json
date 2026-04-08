@@ -115,6 +115,10 @@
     "2026-04-06": {
       "count": 10,
       "uniques": 9
+    },
+    "2026-04-07": {
+      "count": 8,
+      "uniques": 6
     }
   },
   "views": {
@@ -232,6 +236,10 @@
     },
     "2026-04-06": {
       "count": 20,
+      "uniques": 1
+    },
+    "2026-04-07": {
+      "count": 2,
       "uniques": 1
     }
   },
@@ -433,6 +441,18 @@
         "referrer": "linkedin.com",
         "count": 2,
         "uniques": 2
+      }
+    ],
+    "2026-03-25..2026-04-07": [
+      {
+        "referrer": "github.com",
+        "count": 98,
+        "uniques": 4
+      },
+      {
+        "referrer": "linkedin.com",
+        "count": 1,
+        "uniques": 1
       }
     ]
   },
@@ -1057,6 +1077,58 @@
       },
       {
         "path": "/i-dedova/perplexity-research-plugin/branches",
+        "count": 2,
+        "uniques": 2
+      }
+    ],
+    "2026-03-25..2026-04-07": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 39,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 23,
+        "uniques": 5
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/workflows/ci.yml",
+        "count": 13,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulse",
+        "count": 12,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulls",
+        "count": 5,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions",
+        "count": 4,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/runs/23610580399/job/68764901684",
+        "count": 4,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions/runs/23611416098",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/branches",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
         "count": 2,
         "uniques": 2
       }
