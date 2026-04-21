@@ -167,6 +167,10 @@
     "2026-04-19": {
       "count": 14,
       "uniques": 7
+    },
+    "2026-04-20": {
+      "count": 26,
+      "uniques": 11
     }
   },
   "views": {
@@ -337,6 +341,10 @@
     "2026-04-19": {
       "count": 11,
       "uniques": 2
+    },
+    "2026-04-20": {
+      "count": 10,
+      "uniques": 4
     }
   },
   "referrers": {
@@ -699,6 +707,28 @@
         "referrer": "github.com",
         "count": 33,
         "uniques": 3
+      },
+      {
+        "referrer": "com.linkedin.android",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "referrer": "linkedin.com",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-07..2026-04-20": [
+      {
+        "referrer": "github.com",
+        "count": 14,
+        "uniques": 3
+      },
+      {
+        "referrer": "Bing",
+        "count": 1,
+        "uniques": 1
       },
       {
         "referrer": "com.linkedin.android",
@@ -1905,6 +1935,58 @@
       },
       {
         "path": "/i-dedova/perplexity-research-plugin/blob/master/README.md",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-07..2026-04-20": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 48,
+        "uniques": 13
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 25,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulls",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/README.md",
+        "count": 2,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/.github/workflows/ci.yml",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/LICENSE",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/issues",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulse",
         "count": 1,
         "uniques": 1
       }
