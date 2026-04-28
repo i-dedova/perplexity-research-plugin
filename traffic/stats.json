@@ -195,6 +195,10 @@
     "2026-04-26": {
       "count": 20,
       "uniques": 7
+    },
+    "2026-04-27": {
+      "count": 15,
+      "uniques": 5
     }
   },
   "views": {
@@ -391,6 +395,10 @@
       "uniques": 0
     },
     "2026-04-26": {
+      "count": 1,
+      "uniques": 1
+    },
+    "2026-04-27": {
       "count": 1,
       "uniques": 1
     }
@@ -873,6 +881,28 @@
       }
     ],
     "2026-04-13..2026-04-26": [
+      {
+        "referrer": "linkedin.com",
+        "count": 5,
+        "uniques": 1
+      },
+      {
+        "referrer": "Bing",
+        "count": 2,
+        "uniques": 1
+      },
+      {
+        "referrer": "DuckDuckGo",
+        "count": 2,
+        "uniques": 1
+      },
+      {
+        "referrer": "github.com",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-14..2026-04-27": [
       {
         "referrer": "linkedin.com",
         "count": 5,
@@ -2341,6 +2371,43 @@
       {
         "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
         "count": 14,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulls",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/issues",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/README.md",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-14..2026-04-27": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 83,
+        "uniques": 8
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 12,
         "uniques": 1
       },
       {
