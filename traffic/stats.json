@@ -199,6 +199,14 @@
     "2026-04-27": {
       "count": 15,
       "uniques": 5
+    },
+    "2026-04-28": {
+      "count": 26,
+      "uniques": 13
+    },
+    "2026-04-29": {
+      "count": 3,
+      "uniques": 3
     }
   },
   "views": {
@@ -399,6 +407,14 @@
       "uniques": 1
     },
     "2026-04-27": {
+      "count": 1,
+      "uniques": 1
+    },
+    "2026-04-28": {
+      "count": 2,
+      "uniques": 2
+    },
+    "2026-04-29": {
       "count": 1,
       "uniques": 1
     }
@@ -907,6 +923,28 @@
         "referrer": "linkedin.com",
         "count": 5,
         "uniques": 1
+      },
+      {
+        "referrer": "Bing",
+        "count": 2,
+        "uniques": 1
+      },
+      {
+        "referrer": "DuckDuckGo",
+        "count": 2,
+        "uniques": 1
+      },
+      {
+        "referrer": "github.com",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-16..2026-04-29": [
+      {
+        "referrer": "linkedin.com",
+        "count": 6,
+        "uniques": 2
       },
       {
         "referrer": "Bing",
@@ -2424,6 +2462,43 @@
         "path": "/i-dedova/perplexity-research-plugin/issues",
         "count": 2,
         "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/actions",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/blob/master/README.md",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-16..2026-04-29": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 81,
+        "uniques": 9
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 10,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulls",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/issues",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
+        "count": 2,
+        "uniques": 1
       },
       {
         "path": "/i-dedova/perplexity-research-plugin/actions",
