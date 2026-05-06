@@ -227,6 +227,10 @@
     "2026-05-04": {
       "count": 24,
       "uniques": 11
+    },
+    "2026-05-05": {
+      "count": 29,
+      "uniques": 11
     }
   },
   "views": {
@@ -456,6 +460,10 @@
     },
     "2026-05-04": {
       "count": 13,
+      "uniques": 2
+    },
+    "2026-05-05": {
+      "count": 8,
       "uniques": 2
     }
   },
@@ -1091,6 +1099,23 @@
       }
     ],
     "2026-04-21..2026-05-04": [
+      {
+        "referrer": "linkedin.com",
+        "count": 6,
+        "uniques": 2
+      },
+      {
+        "referrer": "DuckDuckGo",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "referrer": "Bing",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-22..2026-05-05": [
       {
         "referrer": "linkedin.com",
         "count": 6,
@@ -2804,6 +2829,33 @@
         "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
         "count": 5,
         "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/issues",
+        "count": 4,
+        "uniques": 3
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulls",
+        "count": 2,
+        "uniques": 2
+      }
+    ],
+    "2026-04-22..2026-05-05": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 83,
+        "uniques": 11
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 15,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
+        "count": 6,
+        "uniques": 3
       },
       {
         "path": "/i-dedova/perplexity-research-plugin/issues",
