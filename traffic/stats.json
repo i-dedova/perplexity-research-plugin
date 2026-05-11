@@ -247,6 +247,10 @@
     "2026-05-09": {
       "count": 25,
       "uniques": 12
+    },
+    "2026-05-10": {
+      "count": 15,
+      "uniques": 11
     }
   },
   "views": {
@@ -497,6 +501,10 @@
     "2026-05-09": {
       "count": 1,
       "uniques": 1
+    },
+    "2026-05-10": {
+      "count": 4,
+      "uniques": 3
     }
   },
   "referrers": {
@@ -1211,6 +1219,23 @@
       }
     ],
     "2026-04-26..2026-05-09": [
+      {
+        "referrer": "DuckDuckGo",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "referrer": "linkedin.com",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "referrer": "search.brave.com",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-27..2026-05-10": [
       {
         "referrer": "DuckDuckGo",
         "count": 2,
@@ -3098,6 +3123,48 @@
       {
         "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
         "count": 14,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
+        "count": 8,
+        "uniques": 3
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/issues",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulls",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.claude-plugin",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.github/workflows",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/agents",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-27..2026-05-10": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 66,
+        "uniques": 9
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 15,
         "uniques": 1
       },
       {
