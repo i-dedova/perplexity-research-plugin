@@ -251,6 +251,10 @@
     "2026-05-10": {
       "count": 15,
       "uniques": 11
+    },
+    "2026-05-11": {
+      "count": 17,
+      "uniques": 11
     }
   },
   "views": {
@@ -505,6 +509,10 @@
     "2026-05-10": {
       "count": 4,
       "uniques": 3
+    },
+    "2026-05-11": {
+      "count": 3,
+      "uniques": 1
     }
   },
   "referrers": {
@@ -1236,6 +1244,23 @@
       }
     ],
     "2026-04-27..2026-05-10": [
+      {
+        "referrer": "DuckDuckGo",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "referrer": "linkedin.com",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "referrer": "search.brave.com",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-28..2026-05-11": [
       {
         "referrer": "DuckDuckGo",
         "count": 2,
@@ -3194,6 +3219,53 @@
       },
       {
         "path": "/i-dedova/perplexity-research-plugin/tree/master/agents",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-04-28..2026-05-11": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 66,
+        "uniques": 9
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 14,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
+        "count": 9,
+        "uniques": 4
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/issues",
+        "count": 3,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/agents",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulls",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.claude-plugin",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.github/workflows",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/scripts",
         "count": 1,
         "uniques": 1
       }
