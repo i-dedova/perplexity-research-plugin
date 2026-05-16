@@ -267,6 +267,10 @@
     "2026-05-14": {
       "count": 21,
       "uniques": 10
+    },
+    "2026-05-15": {
+      "count": 17,
+      "uniques": 12
     }
   },
   "views": {
@@ -537,6 +541,10 @@
     "2026-05-14": {
       "count": 4,
       "uniques": 2
+    },
+    "2026-05-15": {
+      "count": 4,
+      "uniques": 1
     }
   },
   "referrers": {
@@ -1330,6 +1338,18 @@
         "referrer": "DuckDuckGo",
         "count": 2,
         "uniques": 2
+      },
+      {
+        "referrer": "search.brave.com",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-05-02..2026-05-15": [
+      {
+        "referrer": "DuckDuckGo",
+        "count": 1,
+        "uniques": 1
       },
       {
         "referrer": "search.brave.com",
@@ -3444,6 +3464,53 @@
         "path": "/i-dedova/perplexity-research-plugin/issues",
         "count": 3,
         "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/agents",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/pulls",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.claude-plugin",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.github/workflows",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/scripts",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-05-02..2026-05-15": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 65,
+        "uniques": 10
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 12,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
+        "count": 10,
+        "uniques": 5
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/issues",
+        "count": 4,
+        "uniques": 3
       },
       {
         "path": "/i-dedova/perplexity-research-plugin/tree/master/agents",
