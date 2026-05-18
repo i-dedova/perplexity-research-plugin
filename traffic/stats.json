@@ -275,6 +275,10 @@
     "2026-05-16": {
       "count": 17,
       "uniques": 10
+    },
+    "2026-05-17": {
+      "count": 19,
+      "uniques": 12
     }
   },
   "views": {
@@ -553,6 +557,10 @@
     "2026-05-16": {
       "count": 7,
       "uniques": 1
+    },
+    "2026-05-17": {
+      "count": 0,
+      "uniques": 0
     }
   },
   "referrers": {
@@ -1366,6 +1374,18 @@
       }
     ],
     "2026-05-03..2026-05-16": [
+      {
+        "referrer": "DuckDuckGo",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "referrer": "search.brave.com",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-05-04..2026-05-17": [
       {
         "referrer": "DuckDuckGo",
         "count": 1,
@@ -3588,6 +3608,48 @@
         "path": "/i-dedova/perplexity-research-plugin/pulls",
         "count": 1,
         "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.claude-plugin",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/.github/workflows",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/scripts",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-05-04..2026-05-17": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 41,
+        "uniques": 9
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 8,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
+        "count": 6,
+        "uniques": 4
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/issues",
+        "count": 2,
+        "uniques": 2
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/agents",
+        "count": 2,
+        "uniques": 2
       },
       {
         "path": "/i-dedova/perplexity-research-plugin/tree/master/.claude-plugin",
