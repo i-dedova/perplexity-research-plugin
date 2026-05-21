@@ -287,6 +287,10 @@
     "2026-05-19": {
       "count": 14,
       "uniques": 10
+    },
+    "2026-05-20": {
+      "count": 17,
+      "uniques": 12
     }
   },
   "views": {
@@ -575,6 +579,10 @@
       "uniques": 0
     },
     "2026-05-19": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-05-20": {
       "count": 0,
       "uniques": 0
     }
@@ -1431,6 +1439,13 @@
         "count": 1,
         "uniques": 1
       },
+      {
+        "referrer": "search.brave.com",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-05-07..2026-05-20": [
       {
         "referrer": "search.brave.com",
         "count": 1,
@@ -3782,6 +3797,38 @@
       },
       {
         "path": "/i-dedova/perplexity-research-plugin/tree/master/.github/workflows",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/scripts",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-05-07..2026-05-20": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 22,
+        "uniques": 8
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 5,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
+        "count": 4,
+        "uniques": 4
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/issues",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/agents",
         "count": 1,
         "uniques": 1
       },
