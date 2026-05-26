@@ -307,6 +307,10 @@
     "2026-05-24": {
       "count": 16,
       "uniques": 10
+    },
+    "2026-05-25": {
+      "count": 21,
+      "uniques": 10
     }
   },
   "views": {
@@ -615,6 +619,10 @@
       "uniques": 0
     },
     "2026-05-24": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-05-25": {
       "count": 0,
       "uniques": 0
     }
@@ -4008,6 +4016,28 @@
       },
       {
         "path": "/i-dedova/perplexity-research-plugin/tree/master/scripts",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-05-12..2026-05-25": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 13,
+        "uniques": 3
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 3,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/issues",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/i-dedova/perplexity-research-plugin/tree/master/traffic",
         "count": 1,
         "uniques": 1
       }
