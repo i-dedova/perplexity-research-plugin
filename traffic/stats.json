@@ -335,6 +335,10 @@
     "2026-05-31": {
       "count": 28,
       "uniques": 13
+    },
+    "2026-06-01": {
+      "count": 33,
+      "uniques": 16
     }
   },
   "views": {
@@ -671,6 +675,10 @@
       "uniques": 0
     },
     "2026-05-31": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-06-01": {
       "count": 0,
       "uniques": 0
     }
@@ -4176,6 +4184,13 @@
       }
     ],
     "2026-05-18..2026-05-31": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-05-19..2026-06-01": [
       {
         "path": "/i-dedova/perplexity-research-plugin/graphs/traffic",
         "count": 1,
