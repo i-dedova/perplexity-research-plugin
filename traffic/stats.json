@@ -387,6 +387,10 @@
     "2026-06-13": {
       "count": 9,
       "uniques": 5
+    },
+    "2026-06-14": {
+      "count": 35,
+      "uniques": 15
     }
   },
   "views": {
@@ -775,6 +779,10 @@
       "uniques": 0
     },
     "2026-06-13": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-06-14": {
       "count": 0,
       "uniques": 0
     }
@@ -4362,6 +4370,13 @@
       }
     ],
     "2026-05-31..2026-06-13": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-06-01..2026-06-14": [
       {
         "path": "/i-dedova/perplexity-research-plugin",
         "count": 1,
