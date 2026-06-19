@@ -403,6 +403,10 @@
     "2026-06-17": {
       "count": 19,
       "uniques": 10
+    },
+    "2026-06-18": {
+      "count": 28,
+      "uniques": 11
     }
   },
   "views": {
@@ -807,6 +811,10 @@
       "uniques": 1
     },
     "2026-06-17": {
+      "count": 0,
+      "uniques": 0
+    },
+    "2026-06-18": {
       "count": 0,
       "uniques": 0
     }
@@ -1710,6 +1718,18 @@
       }
     ],
     "2026-06-04..2026-06-17": [
+      {
+        "referrer": "DuckDuckGo",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "referrer": "github.com",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "2026-06-05..2026-06-18": [
       {
         "referrer": "DuckDuckGo",
         "count": 1,
@@ -4457,6 +4477,13 @@
         "path": "/i-dedova/perplexity-research-plugin",
         "count": 3,
         "uniques": 3
+      }
+    ],
+    "2026-06-05..2026-06-18": [
+      {
+        "path": "/i-dedova/perplexity-research-plugin",
+        "count": 2,
+        "uniques": 2
       }
     ]
   }
